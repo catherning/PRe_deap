@@ -105,7 +105,7 @@ ant = AntSimulator(600)
 pset = gp.PrimitiveSet("MAIN", 0)
 pset.addPrimitive(ant.if_food_ahead, 2)
 pset.addPrimitive(prog2, 2)
-pset.addPrimitive(prog3, 3)
+#pset.addPrimitive(prog3, 3)
 pset.addTerminal(ant.move_forward)
 pset.addTerminal(ant.turn_left)
 pset.addTerminal(ant.turn_right)
@@ -277,13 +277,52 @@ def mainGen(gen):
     stats.register("min", numpy.min)
     stats.register("max", numpy.max)
 
-    p,logbook=algorithms.eaSimple(pop, toolbox, 0.5, 0.2, gen, stats, halloffame=hof,verbose=0)
+    p,logbook=algorithms.eaSimple(pop, toolbox, 0.5, 0.2, gen, stats, halloffame=hof)
     
     #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
     list_max=[]
     for elt in logbook:
         list_max.append(elt['max'])
-    max_fit=max(list_max)
+    max_fit=max(list_max)       #list_max[1]
+    list_results.append(max_fit)
+
+    i=0
+    while(logbook[i]['max']!=max_fit):
+        i+=1
+    list_results.append(logbook[i]['gen'])
+   
+    print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
+    
+    
+    #Shows the individuals in the Hall of Fame
+    #for ind in hof:
+     #   print (ind)
+    
+    return pop, hof, stats
+
+def mainOpt():
+    rand=int(time.clock())
+    random.seed(rand)
+    list_results=[rand]
+    
+    with  open("C:/Users/cx10/deap-master/examples/gp/ant/santafe_trail.txt") as trail_file:
+      ant.parse_matrix(trail_file)
+    
+    pop = toolbox.population(n=355)
+    hof = tools.HallOfFame(1)
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", numpy.mean)
+    stats.register("std", numpy.std)
+    stats.register("min", numpy.min)
+    stats.register("max", numpy.max)
+
+    p,logbook=algorithms.eaSimple(pop, toolbox, 0.34, 0.56, 70, stats, halloffame=hof,verbose=0)
+    
+    #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
+    list_max=[]
+    for elt in logbook:
+        list_max.append(elt['max'])
+    max_fit=max(list_max)       #list_max[1]
     list_results.append(max_fit)
 
     i=0
@@ -303,7 +342,7 @@ def mainGen(gen):
 
 if __name__ == "__main__":
     NB_SIMU=50
-    param="gen"
+    param="opt"
     
     if param=="rand":
         print ("Rand   Max_fit  Gen")
@@ -325,4 +364,8 @@ if __name__ == "__main__":
     elif param=="gen":
         print ("Total_gen   Max_fit  Gen")
         for i in range (NB_SIMU):
-            mainGen(150)
+            mainGen(70)
+    else:
+        print ("Rand   Max_fit  Gen")
+        for i in range (NB_SIMU):
+            mainOpt()
