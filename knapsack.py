@@ -151,7 +151,7 @@ if __name__ == "__main__":
     mutpb = 0.2
     pb_pace=0.02
     
-    param_list=["optimal"]
+    param_list=["original","rand","mu","lamb","cross","mutate","optimal"]
     
     for param in param_list:
         print("\n")
