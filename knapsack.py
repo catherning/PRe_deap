@@ -91,7 +91,7 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     CXPB = cxpb
     MUTPB = mutpb
     
-    if param=="rand":
+    if param=="rand" or param=="optimal":
         list_results=[rand]
     elif param=="mu":
         list_results=[mu]
@@ -103,7 +103,9 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
         list_results=[mutpb]
     elif param=="ngen":
         list_results=[ngen]
-
+    elif param=="original":
+        list_results=[param]
+        
     pop = toolbox.population(n=MU)
     hof = tools.ParetoFront()
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -116,6 +118,7 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
                               halloffame=hof,verbose=0)
     
     #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
+    #to comment if you want the original results
     list_max=[]
     for elt in logbook:
         list_max.append(elt['max'])
@@ -126,7 +129,6 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     while(logbook[i]['max'][1]!=max_fit[1]):
         i+=1
     list_results.append(logbook[i]['gen'])
-   
     print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
     
     
@@ -135,7 +137,8 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
 #    print("\n")
 #    for ind in pop:
 #        print(ind)
-#    return pop, stats, hof
+    
+    return pop, stats, hof
 
 if __name__ == "__main__":
     NB_SIMU=50
@@ -146,12 +149,16 @@ if __name__ == "__main__":
     lamb = 100
     cxpb = 0.7
     mutpb = 0.2
+    pb_pace=0.02
     
-    param_list=["rand","mu","lamb","cross","mutate"]
+    param_list=["optimal"]
     
     for param in param_list:
+        print("\n")
         
-    
+        if param=="original":
+            main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+            
         if param=="rand":
             print ("Rand   Max_fit   Gen")
             for i in range (NB_SIMU):
@@ -169,11 +176,23 @@ if __name__ == "__main__":
                 main(rand,mu,lamb+i,cxpb,mutpb,ngen,param)
         elif param=="cross":
             print ("CrossProba   Max_fit   Gen")
+            NB_SIMU=int((1-mutpb)/pb_pace)
             for i in range (NB_SIMU):
                 cxpb=0
-                main(rand,mu,lamb,cxpb+i*0.02,mutpb,ngen,param)
+                main(rand,mu,lamb,cxpb+i*pb_pace,mutpb,ngen,param)
         elif param=="mutate":
+            NB_SIMU=int((1-cxpb)/pb_pace)
             print ("MutPb   Max_fit   Gen")
             for i in range (NB_SIMU):
                 mutpb=0
-                main(rand,mu+i,lamb,cxpb,mutpb+i*0.02,ngen,param)
+                main(rand,mu+i,lamb,cxpb,mutpb+i*pb_pace,ngen,param)
+        elif param=="optimal":
+            NB_SIMU=50
+            mu=27
+            lamb=112
+            cxpb=0.18
+            mutpb=0.26
+            print ("Rand   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                rand=int(time.clock()*10)
+                main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)
