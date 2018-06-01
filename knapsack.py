@@ -7,6 +7,8 @@ from deap import base
 from deap import creator
 from deap import tools
 
+import time
+
 IND_INIT_SIZE = 5
 MAX_ITEM = 50
 MAX_WEIGHT = 50
@@ -16,7 +18,7 @@ NBR_ITEMS = 20
 # dict initialization. It is also seeded in main().
 random.seed(64)
 
-# Create the item dictionary: item name is an integer, and value is 
+# Create the item dictionary: item name is an integer, and value is
 # a (weight, value) 2-uple.
 items = {}
 # Create random items and store them in the items' dictionary.
@@ -32,7 +34,7 @@ toolbox = base.Toolbox()
 toolbox.register("attr_item", random.randrange, NBR_ITEMS)
 
 # Structure initializers
-toolbox.register("individual", tools.initRepeat, creator.Individual, 
+toolbox.register("individual", tools.initRepeat, creator.Individual,
     toolbox.attr_item, IND_INIT_SIZE)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
@@ -55,7 +57,7 @@ def cxSet(ind1, ind2):
     ind1 &= ind2                    # Intersection (inplace)
     ind2 ^= temp                    # Symmetric Difference (inplace)
     return ind1, ind2
-    
+
 def mutSet(individual):
     """Mutation that pops or add an element."""
     if random.random() < 0.5:
@@ -70,14 +72,38 @@ toolbox.register("mate", cxSet)
 toolbox.register("mutate", mutSet)
 toolbox.register("select", tools.selNSGA2)
 
-def main():
-    random.seed(64)
-    NGEN = 50
-    MU = 50
-    LAMBDA = 100
-    CXPB = 0.7
-    MUTPB = 0.2
+def maxi(list_eval):
+    max_value=list_eval[0][1]
+    max_ind=0
+    for i in range(len(list_eval)):
+        if max_value<list_eval[i][1]:
+            max_value=list_eval[i][1]
+            max_ind=i
+    return list_eval[max_ind]
     
+
+
+def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
+    random.seed(rand)
+    NGEN = ngen
+    MU = mu
+    LAMBDA = lamb
+    CXPB = cxpb
+    MUTPB = mutpb
+    
+    if param=="rand":
+        list_results=[rand]
+    elif param=="mu":
+        list_results=[mu]
+    elif param=="lamb":
+        list_results=[lamb]
+    elif param=="cross":
+        list_results=[cxpb]
+    elif param=="mutate":
+        list_results=[mutpb]
+    elif param=="ngen":
+        list_results=[ngen]
+
     pop = toolbox.population(n=MU)
     hof = tools.ParetoFront()
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -85,15 +111,69 @@ def main():
     stats.register("std", numpy.std, axis=0)
     stats.register("min", numpy.min, axis=0)
     stats.register("max", numpy.max, axis=0)
+
+    p,logbook=algorithms.eaMuPlusLambda(pop, toolbox, MU, LAMBDA, CXPB, MUTPB, NGEN, stats,
+                              halloffame=hof,verbose=0)
     
-    algorithms.eaMuPlusLambda(pop, toolbox, MU, LAMBDA, CXPB, MUTPB, NGEN, stats,
-                              halloffame=hof)
-    for ind in hof:
-        print(ind)
-    print("\n")
-    for ind in pop:
-        print(ind)
-    return pop, stats, hof
-                 
+    #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
+    list_max=[]
+    for elt in logbook:
+        list_max.append(elt['max'])
+    max_fit=maxi(list_max)       #list_max[1]
+    list_results.append(max_fit)
+
+    i=0
+    while(logbook[i]['max'][1]!=max_fit[1]):
+        i+=1
+    list_results.append(logbook[i]['gen'])
+   
+    print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
+    
+    
+#    for ind in hof:
+#        print(ind)
+#    print("\n")
+#    for ind in pop:
+#        print(ind)
+#    return pop, stats, hof
+
 if __name__ == "__main__":
-    main()                 
+    NB_SIMU=50
+    
+    rand=69
+    ngen = 100
+    mu = 50
+    lamb = 100
+    cxpb = 0.7
+    mutpb = 0.2
+    
+    param_list=["rand","mu","lamb","cross","mutate"]
+    
+    for param in param_list:
+        
+    
+        if param=="rand":
+            print ("Rand   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                rand=int(time.clock()*10)
+                main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+        elif param=="mu":
+            print ("Mu   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                mu=20
+                main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)
+        elif param=="lamb":
+            print ("Lambda   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                lamb=70
+                main(rand,mu,lamb+i,cxpb,mutpb,ngen,param)
+        elif param=="cross":
+            print ("CrossProba   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                cxpb=0
+                main(rand,mu,lamb,cxpb+i*0.02,mutpb,ngen,param)
+        elif param=="mutate":
+            print ("MutPb   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                mutpb=0
+                main(rand,mu+i,lamb,cxpb,mutpb+i*0.02,ngen,param)
