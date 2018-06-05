@@ -15,9 +15,10 @@ from deap import tools
 import time
 import csv
 from datetime import datetime
+from itertools import islice
  
 
-IND_INIT_SIZE = 5
+IND_INIT_SIZE = 3
 MAX_ACTIONS = 50
 # To assure reproductibility, the RNG seed is set prior to the items
 # dict initialization. It is also seeded in main().
@@ -52,13 +53,27 @@ list_pc=[i for i in range (5)]
 #    for row in logon_file:
 #       list_pc.append(row['pc'])
 
+
+#List of URLS
+list_url=[]
+with open('D:/r6.2/http.csv') as csvfile3:
+    url_file = csv.DictReader(csvfile3)
+    for row in islice(url_file,10):     #limit number of urls for now
+       list_url.append(row['url'])
+
 def action():
     action={}
     action["type"]=random.choice(actions)
     action["date"]=actionDate()
     action["pc"]=random.choice(list_pc)
     
+    if action["type"]=="logon":
+        action["activity"]=random.choice(["logon","logoff"])
+    elif action["type"]=="http":
+        action["activity"]=random.choice(["WWW Download","WWW Upload","WWW Vist"])
+        action["url"]=random.choice(list_url)
     return action
+
 
 creator.create("Fitness", base.Fitness, weights=(1.0,))
 creator.create("Individual", list, fitness=creator.Fitness,username=None)
@@ -71,12 +86,20 @@ toolbox.register("attr_action", action)
 # Structure initializers
 toolbox.register("individual", tools.initRepeat, creator.Individual,
     toolbox.attr_action, IND_INIT_SIZE)
+toolbox.register("individual", tools.initRepeat, creator.Individual,
+    toolbox.attr_action, IND_INIT_SIZE)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 
 def main(size):
     pop = toolbox.population(n=size)
-    print(pop)
+    for ind in pop:
+        ind.sort(key=lambda r: r["date"])   #sort the sequences by date of action
+        ind.username=random.choice(list_user_id)    #add username
+        ind.oiahd=random.choice(list_user_id)
+        print(ind)
+        print(ind.username)
+    
     
 if __name__ == "__main__":
     SIZE=5
