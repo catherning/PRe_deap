@@ -22,7 +22,7 @@ IND_INIT_SIZE = 3
 MAX_ACTIONS = 50
 # To assure reproductibility, the RNG seed is set prior to the items
 # dict initialization. It is also seeded in main().
-random.seed(64)
+random.seed(65)
 
 #List of users id
 list_user_id=[]
@@ -58,8 +58,29 @@ list_pc=[i for i in range (5)]
 list_url=[]
 with open('D:/r6.2/http.csv') as csvfile3:
     url_file = csv.DictReader(csvfile3)
-    for row in islice(url_file,10):     #limit number of urls for now
+    for row in islice(url_file,10):     #limit number of urls for now, faster
        list_url.append(row['url'])
+      
+#List of file_tree
+list_filetree=[]
+with open('D:/r6.2/device.csv') as csvfile4:
+    filetree_file = csv.DictReader(csvfile4)
+    for row in islice(filetree_file,10):     #limit number of urls for now
+       list_filetree.append(row['file_tree'])   #repeated, so same proportion and probability than in dataset?
+
+#List of file
+list_file=[]
+with open('D:/r6.2/file.csv') as csvfile5:
+    file_file = csv.DictReader(csvfile5)
+    for row in islice(file_file,10):     #limit number of urls for now
+        list_file.append(row['filename'])
+        
+#List of email
+list_file=[]
+with open('D:/r6.2/email.csv') as csvfile6:
+    email_file = csv.DictReader(csvfile6)
+    for row in islice(email_file,10):     #limit number of urls for now
+        list_file.append([row['to'],row['cc'],row['bcc'],row['from'],row['attachments']])
 
 def action():
     action={}
@@ -72,6 +93,23 @@ def action():
     elif action["type"]=="http":
         action["activity"]=random.choice(["WWW Download","WWW Upload","WWW Vist"])
         action["url"]=random.choice(list_url)
+    elif action["type"]=="device":
+        action["activity"]=random.choice(["connect","disconnect"])
+        action["file_tree"]=random.choice(list_filetree)
+    elif action["type"]=="file":
+        action["activity"]=random.choice(["open","write","copy","delete"])
+        action["to_removable_media"]=random.choice([True,False])
+        action["from_removable_media"]=random.choice([True,False])
+        action["filename"]=random.choice(list_file)
+    elif action["type"]=="email":
+        action["activity"]=random.choice(["Send","View"])
+        action["size"]=random.randint(1,10000)  #to do: change the max (and min) value
+        action["to"]=random.choice(list_file)[0]    #or the from the same row for the five attributes to cc bcc from attachments?
+        action["cc"]=random.choice(list_file)[1]
+        action["bcc"]=random.choice(list_file)[2]
+        action["from"]=random.choice(list_file)[3]
+        action["attachments"]=random.choice(list_file)[4]
+        
     return action
 
 
