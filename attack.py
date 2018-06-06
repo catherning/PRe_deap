@@ -18,7 +18,7 @@ from datetime import datetime
 from itertools import islice
  
 
-IND_INIT_SIZE = 3
+IND_INIT_SIZE = 5
 MAX_ACTIONS = 50
 # To assure reproductibility, the RNG seed is set prior to the items
 # dict initialization. It is also seeded in main().
@@ -77,11 +77,11 @@ with open('D:/r6.2/file.csv') as csvfile5:
         list_file.append(row['filename'])
         
 #List of email
-list_file=[]
+list_email=[]
 with open('D:/r6.2/email.csv') as csvfile6:
     email_file = csv.DictReader(csvfile6)
     for row in islice(email_file,500):     #limit number of email
-        list_file.append([row['to'],row['cc'],row['bcc'],row['from'],row['attachments']])
+        list_email.append([row['to'],row['cc'],row['bcc'],row['from'],row['attachments']])
 b=datetime.now()
 
 def action():
@@ -106,11 +106,11 @@ def action():
     elif action["type"]=="email":
         action["activity"]=random.choice(["Send","View"])
         action["size"]=random.randint(1,10000)  #to do: change the max (and min) value
-        action["to"]=random.choice(list_file)[0]    #or the from the same row for the five attributes to cc bcc from attachments?
-        action["cc"]=random.choice(list_file)[1]
-        action["bcc"]=random.choice(list_file)[2]
-        action["from"]=random.choice(list_file)[3]
-        action["attachments"]=random.choice(list_file)[4]
+        action["to"]=random.choice(list_email)[0]    #or the from the same row for the five attributes to cc bcc from attachments?
+        action["cc"]=random.choice(list_email)[1]
+        action["bcc"]=random.choice(list_email)[2]
+        action["from"]=random.choice(list_email)[3]
+        action["attachments"]=random.choice(list_email)[4]
         
     return action
 
