@@ -134,9 +134,11 @@ def main(size):
     for ind in pop:
         ind.sort(key=lambda r: r["date"])   #sort the sequences by date of action
         ind.username=random.choice(list_user_id)    #add username
-        ind.oiahd=random.choice(list_user_id)
-        print(ind)
         print(ind.username)
+        print("[")
+        for elt in ind:
+            print(elt)
+        print("]\n")
     
     
 if __name__ == "__main__":
