@@ -1,3 +1,17 @@
 
 *.stackdump
 read_csv.py
+__pycache__/globals.cpython-36.pyc
+ACM2278.txt
+ACM2278_annotation.txt
+CDE1846.txt
+CMP2946.txt
+intermediate/ACM2278_aggregated.csv
+intermediate/ACM2278_device.csv
+intermediate/ACM2278_email.csv
+intermediate/ACM2278_file.csv
+intermediate/ACM2278_http.csv
+intermediate/ACM2278_logon.csv
+intermediate/logon.csv
+MBG3183.txt
+test.py
