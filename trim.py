@@ -10,11 +10,12 @@ if __name__ == '__main__':
                         'CMP2946': (datetime.date(2011,2,2), datetime.date(2011,3,31)),
                         'CDE1846': (datetime.date(2011,2,21), datetime.date(2011,4,26)),
                         'MBG3183': (datetime.date(2010,10,12), datetime.date(2010,10,14))}
-
+    
+    a=datetime.datetime.now()
     for f in fileList:
         with open(path+f) as inFile:
             outFile1 = open(path+'1-ACM2278/'+f[:f.rfind('.')]+'.csv','w+')
-#            outFile2 = open(path+'2-CMP2946/'+f[:f.rfind('.')]+'.csv','w+')
+            outFile2 = open(path+'2-CMP2946/'+f[:f.rfind('.')]+'.csv','w+')
 #            outFile3 = open(path+'4-CDE1846/'+f[:f.rfind('.')]+'.csv','w+')
 #            outFile4 = open(path+'5-MBG3183/'+f[:f.rfind('.')]+'.csv','w+')
             inFile.readline()
@@ -27,16 +28,18 @@ if __name__ == '__main__':
                     break
                 if timestamp.date() >= datetime.date(2010,8,18) and timestamp.date() < datetime.date(2010,8,25):
                     outFile1.write(line)
-#                if timestamp.date() >= datetime.date(2011,2,2) and timestamp.date() < datetime.date(2011,3,31):
-#                    outFile2.write(line)
+                if timestamp.date() >= datetime.date(2011,2,2) and timestamp.date() < datetime.date(2011,3,31):
+                    outFile2.write(line)
 #                if timestamp.date() >= datetime.date(2011,2,21) and timestamp.date() < datetime.date(2011,4,26):
 #                    outFile3.write(line)
 #                if timestamp.date() >= datetime.date(2010,10,12) and timestamp.date() < datetime.date(2010,10,14):
 #                    outFile4.write(line)
 
             outFile1.close()
-#            outFile2.close()
+            outFile2.close()
 #            outFile3.close()
 #            outFile4.close()
         print(f), 'finished.'
         inFile.close()
+    b=datetime.datetime.now()
+    print(b-a)
