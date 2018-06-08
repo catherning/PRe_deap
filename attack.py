@@ -59,7 +59,8 @@ list_pc=[i for i in range (5)]
 list_url=[]
 with open('D:/r6.2/http.csv') as csvfile3:
     url_file = csv.DictReader(csvfile3)
-    for row in islice(url_file,500):     #limit number of urls 
+    for row in islice(url_file,500):     #limit number of urls. Have to read line by line (not use DictReader? to process all of the lines.
+                                                #can open as file, not necessarily csv
        list_url.append(row['url'])
       
 #List of file_tree
@@ -90,6 +91,7 @@ def action():
     action["date"]=actionDate()
     action["pc"]=random.choice(list_pc)
     
+    #all other attributes useless if using HMM ?
     if action["type"]=="logon":
         action["activity"]=random.choice(["logon","logoff"])
     elif action["type"]=="http":
