@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 """
 Created on Wed Jun  6 10:20:38 2018
 
@@ -24,8 +24,8 @@ with open(path+'psychometric.csv') as csvfile:
     for row in psychometric_file:
        list_user_id.append(row['user_id'])
        
-       usr_file=open(path+"users/"+row['user_id']+'.csv','w+')
-       usr_file.close()
+#       usr_file=open(path+"users/"+row['user_id']+'.csv','w+')
+#       usr_file.close()
 
 
 #for i in range (len(list_user_id)):
@@ -60,8 +60,8 @@ with open(path+'psychometric.csv') as csvfile:
 
 
 def actions(file):
+    a=datetime.datetime.now() 
     act_file=open(path+'splitted/'+file)
-    
     for line in act_file:
         data=line.split(',')
         user=data[1]
@@ -72,20 +72,31 @@ def actions(file):
         usr_file.writelines(data[len(data)-1])
         usr_file.close()
     act_file.close()
-    print("Actions de %s reparties.",file)
+    b=datetime.datetime.now()
+    print("Actions of "+file+" seperated in "+str(b-a)+" seconds.")
     return file
         
-    
-a=datetime.datetime.now()    
-#l=list(map(actions,list_user_id))
-l=list(map(actions,list_files))  
+#first_file=0
+#last_file=10
+NB_FILES=5
+first_file=int(input("Enter the index of the first file to separate by users BEGIN AT 20:"))
+last_file=first_file+NB_FILES
+a=datetime.datetime.now()
+l=list(map(actions,list_files[first_file:last_file]))
 b=datetime.datetime.now()
-print(b-a)
+print("Task done for files from "+str(first_file)+" ("+list_files[first_file]+") to "+str(last_file)+" ("+list_files[last_file]+") in "+str(b-a)+" seconds.")
 
-#    usr_file.write(list_actions[0]+',')
-#    usr_file.writelines(line)
-    #print(line,file=usr_file)
+ 
+
+#l=list(map(actions,list_user_id))
+while(input("Do you want to continue ? (y/n): ")=='y' and last_file<=652):
+    first_file=last_file
+    last_file+=5
+    
+    a=datetime.datetime.now()
+    print('Estimated end time:'+str(a+NB_FILES*datetime.time(0,6,30)))    
+    l=list(map(actions,list_files[first_file:last_file]))  
+    b=datetime.datetime.now()
+    print("Task done for files from "+str(first_file)+" ("+list_files[first_file]+") to "+str(last_file)+" ("+list_files[last_file]+") in "+str(b-a)+" seconds.")
 
 
-#for i in range(10):
-#    print('%d,' %(2*i),file=test)
