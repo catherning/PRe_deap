@@ -5,11 +5,8 @@ Created on Wed Jun  6 10:20:38 2018
 @author: cx10
 """
 
-import sklearn
 import datetime
 import csv
-from itertools import islice
-import time
 import os
 
 path='D:/r6.2/'
@@ -24,13 +21,13 @@ with open(path+'psychometric.csv') as csvfile:
     for row in psychometric_file:
        list_user_id.append(row['user_id'])
        
+#To create the files of the users/ start from scratch       
 #       usr_file=open(path+"users/"+row['user_id']+'.csv','w+')
 #       usr_file.close()
 
 
-#for i in range (len(list_user_id)):
-#for i in range (1,2):
-    
+
+#Older version which would parallelize by user, and open the big files of actions each time...
 #def actions(user):
 #    usr_file=open(path+"users/"+user+'.csv','w+')
 #    
@@ -58,7 +55,7 @@ with open(path+'psychometric.csv') as csvfile:
 #    usr_file.close()
 #    return user
 
-
+#Splits the actions in file by user
 def actions(file):
     a=datetime.datetime.now() 
     act_file=open(path+'splitted/'+file)
@@ -73,30 +70,30 @@ def actions(file):
         usr_file.close()
     act_file.close()
     b=datetime.datetime.now()
-    print("Actions of "+file+" seperated in "+str(b-a)+" seconds.")
+    print("Actions of "+file+" separated in "+str(b-a)+" seconds.")
     return file
-        
-#first_file=0
-#last_file=10
-NB_FILES=5
-first_file=int(input("Enter the index of the first file to separate by users BEGIN AT 20:"))
+
+
+#Parallelize a first time
+first_file=int(input("Enter the index of the first file to separate by users BEGIN AT 90: "))
+NB_FILES=int(input("Enter the number of files to separate by users: "))
 last_file=first_file+NB_FILES
 a=datetime.datetime.now()
+print('Estimated end time:'+str(a+datetime.timedelta(minutes=4*NB_FILES)))
 l=list(map(actions,list_files[first_file:last_file]))
 b=datetime.datetime.now()
-print("Task done for files from "+str(first_file)+" ("+list_files[first_file]+") to "+str(last_file)+" ("+list_files[last_file]+") in "+str(b-a)+" seconds.")
+print("Task done for files from "+str(first_file)+" ("+list_files[first_file]+") to "+str(last_file-1)+" ("+list_files[last_file-1]+") in "+str(b-a)+" seconds.")
 
- 
-
-#l=list(map(actions,list_user_id))
+#If we want to do it again 
 while(input("Do you want to continue ? (y/n): ")=='y' and last_file<=652):
+    NB_FILES=int(input("Enter the number of files to separate by users: "))
     first_file=last_file
     last_file+=5
     
     a=datetime.datetime.now()
-    print('Estimated end time:'+str(a+NB_FILES*datetime.time(0,6,30)))    
+    print('Estimated end time:'+str(a+datetime.timedelta(minutes=4*NB_FILES)))    
     l=list(map(actions,list_files[first_file:last_file]))  
     b=datetime.datetime.now()
-    print("Task done for files from "+str(first_file)+" ("+list_files[first_file]+") to "+str(last_file)+" ("+list_files[last_file]+") in "+str(b-a)+" seconds.")
+    print("Task done for files from "+str(first_file)+" ("+list_files[first_file]+") to "+str(last_file-1)+" ("+list_files[last_file-1]+") in "+str(b-a)+" seconds.")
 
 
