@@ -13,6 +13,7 @@ from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
+from math import sqrt
 
 import csv
 
@@ -117,9 +118,22 @@ def fitness(ind):
         return 1000,
     elif len(ind)<=1:
         return 1000,
+    
+    def Cosine(answer,ind):
+        a=[]
+        b=[]
+        for elt in answer:
+            a[elt]+=1
+        for elt in ind:
+            b[elt]+=1
+        dot=sum(i[0] * i[1] for i in zip(a, b))
+        normA=sqrt(sum(i**2 for i in a))
+        normB=sqrt(sum(i**2 for i in b))
+        return (dot/(normA*normB))
     #fit=distanceLevenshtein(attackAnswer,len(attackAnswer),ind,len(ind))
-    fit=1-Jaccard(attackAnswer,ind)
-    #print(fit)
+    #fit=1-Jaccard(attackAnswer,ind)
+    fit=1-Cosine(attackAnswer,ind)
+    print(fit)
     return fit,
 
 
