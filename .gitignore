@@ -15,3 +15,4 @@ intermediate/ACM2278_logon.csv
 intermediate/logon.csv
 MBG3183.txt
 test.py
+*.pyc

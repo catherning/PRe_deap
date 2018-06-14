@@ -114,39 +114,44 @@ def fitness(ind):
         inter=len(a&b)
         jaccard=inter/(len(a)+len(b)-inter)
         return jaccard
-    if len(ind)>MAX_ACTIONS:
-        return 1000,
-    elif len(ind)<=1:
-        return 1000,
+    
+
     
     def Cosine(answer,ind):
-        a=[]
-        b=[]
+        a=[0]*14
+        b=[0]*14
         for elt in answer:
             a[elt]+=1
         for elt in ind:
+            #print(elt)
             b[elt]+=1
         dot=sum(i[0] * i[1] for i in zip(a, b))
         normA=sqrt(sum(i**2 for i in a))
         normB=sqrt(sum(i**2 for i in b))
         return (dot/(normA*normB))
+    
+    if len(ind)>MAX_ACTIONS:
+        return 1000,
+    elif len(ind)<=1:
+        return 1000,
+    
     #fit=distanceLevenshtein(attackAnswer,len(attackAnswer),ind,len(ind))
-    #fit=1-Jaccard(attackAnswer,ind)
-    fit=1-Cosine(attackAnswer,ind)
-    print(fit)
+    #coef=Jaccard(attackAnswer,ind)
+    coef=Cosine(attackAnswer,ind)
+    fit=1-coef
     return fit,
 
 
 
 
-creator.create("Fitness", base.Fitness, weights=(-1.0,))
-creator.create("Individual", list, fitness=creator.Fitness)
+#creator.create("Fitness", base.Fitness, weights=(-1.0,))
+#creator.create("Individual", list, fitness=creator.Fitness)
 
 toolbox = base.Toolbox()
 
 # Attribute generator
 #toolbox.register("attr_action", action)
-toolbox.register("attr_action", random.randint,1,14)
+toolbox.register("attr_action", random.randint,1,13)
 
 # Structure initializers
 toolbox.register("individual", tools.initRepeat, creator.Individual,
@@ -160,7 +165,8 @@ def mutList(individual):
         if len(individual) > 0:     # We cannot pop from an empty set
             individual.pop(random.randint(0,len(individual)-1))
     else:
-        individual.insert(random.randint(1,14),random.randint(0,len(individual)))
+        individual.insert(random.randint(0,len(individual)),random.randint(1,13))
+        #print(individual)
     return individual,
 
 toolbox.register("evaluate", fitness)
@@ -214,7 +220,7 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
 if __name__ == "__main__":
     NB_SIMU=10
 
-    ngen = 30
+    ngen = 10
     mu = 50
     lamb = 100
     cxpb = 0.7
