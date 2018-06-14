@@ -6,12 +6,12 @@ Created on Thu Jun 14 13:39:41 2018
 """
 import os
 from datetime import datetime
-
+from sklearn.neighbors import NearestNeighbors
 
 path='D:/r6.2/users/'
 list_users=os.listdir(path)
 
-#Reads the data in the csv file for one user, transforms it to a dictiornary containing the values for the action
+"""Reads the data in the csv file for one user, transforms it to a dictionary containing the values for the action"""
 def action(data):
     action={}
     action["type"]=data[0]
@@ -44,25 +44,42 @@ def action(data):
         
     return action
 
+
+"""Returns the list of the days of activities. One day is represented by a featuer vector with:
+    - hour of beginning of the day
+    - duration of the day (until last action done in the day)
+    - number of logons/logoffs
+    - number of emails sent
+    - if there's a removable media
+    - the number of activities on the web
+   """ 
 def days(list_actions):
     days=[]
-    beginning=list_actions[0]['date'].date()
-    feature_vect=[0]*4
+    beginning=list_actions[0]['date']
+    feature_vect=[0]*6
+    feature_vect[0]=beginning.hour
     for act in list_actions:
-        if act['date'].date()==beginning:
+        if act['date'].date()==beginning.date():
+            duration=act['date']-beginning
             if act['type']=='l':
-                feature_vect[0]+=1
+                feature_vect[2]+=1
             elif act['type']=='e' and act['activity']=='Send':
-                feature_vect[1]+=1
-            elif act['type']=='f' and (act["to_removable_media"]=='TRUE' or act["from_removable_media"]=='TRUE'):
-                feature_vect[2]=1
-            elif act["type"]=="h":
                 feature_vect[3]+=1
+            elif act['type']=='f' and (act["to_removable_media"]=='TRUE' or act["from_removable_media"]=='TRUE'):
+                feature_vect[4]=1
+            elif act["type"]=="h":
+                feature_vect[5]+=1
         else:
-            beginning=act['date'].date()
+            beginning=act['date']
+            feature_vect[1]=duration.total_seconds()/60
             days.append(feature_vect)
-            feature_vect=[0]*4
+            feature_vect=[0]*6
+            feature_vect[0]=act['date'].hour
     
+    #Normalize the vector
+    for i in range (len(days)):
+        days[i]= [j/max(days[i]) for j in days[i]]
+
     return days
 
 if __name__ == "__main__":
@@ -81,8 +98,12 @@ if __name__ == "__main__":
     #CHECK IF IT IS WORKING
     list_actions.sort(key=lambda r: r["date"])   #sort the sequences by date of action 
     #print(list_actions[0:10])
-    print(list_actions)
+    #print(list_actions)
     days=days(list_actions)
-    print(days)
+    #print(days)
+    
+    nbrs = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(days)
+    distances, indices = nbrs.kneighbors(days)
+    print(indices) 
 
 
