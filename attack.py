@@ -16,7 +16,7 @@ import time
 import csv
 from datetime import datetime
 from itertools import islice
- 
+import kNN
 
 IND_INIT_SIZE = 5
 MAX_ACTIONS = 50
@@ -37,13 +37,17 @@ actions=["logon","email","http","device","file"]
 
 #Date of the action
 def actionDate():
+    #year = 2010
+    #month = random.randint(1, 12)
+    #day = random.randint(1, 28)
     year = 2010
-    month = random.randint(1, 12)
-    day = random.randint(1, 28)
+    month = 1
+    day = 1
     hour=random.randint(0, 23)
     minute=random.randint(0, 59)
     second=random.randint(0, 59)
     action_date = datetime(year, month, day,hour,minute,second)
+    #action_date = time(hour,minute,second)
     return action_date
 
 a=datetime.now()
@@ -117,33 +121,70 @@ def action():
     return action
 
 
-creator.create("Fitness", base.Fitness, weights=(1.0,))
-creator.create("Individual", list, fitness=creator.Fitness,username=None)
+def session():
+    ind=[]
+    for i in range(IND_INIT_SIZE):
+        ind.append(action())
+    ind.sort(key=lambda r: r["date"])   #sort the sequences by date of action
+
+    
+    beginning=ind[0]['date']
+
+    feature_vect=[0]*6
+    feature_vect[0]=beginning.hour
+    for act in ind:
+        duration=act['date']-beginning
+        if act['type']=='logon':
+            feature_vect[2]+=1
+        elif act['type']=='email' and act['activity']=='Send':
+            feature_vect[3]+=1
+        elif act['type']=='file' and (act["to_removable_media"]==True or act["from_removable_media"]==True):
+            feature_vect[4]=1
+        elif act["type"]=="http":
+            feature_vect[5]+=1
+
+    beginning=act['date']
+    feature_vect[1]=duration.total_seconds()/60
+          
+    #Normalize the vector
+    feature_vect= [i/max(feature_vect) for i in feature_vect]
+    
+    
+    return feature_vect
+
+#creator.create("Fitness", base.Fitness, weights=(1.0,))
+#creator.create("Individual", list, fitness=creator.Fitness) #,username=None
 
 toolbox = base.Toolbox()
 
+
+def mute(individual):
+    pass
+
+
 # Attribute generator
 toolbox.register("attr_action", action)
+toolbox.register("session", session)
 
 # Structure initializers
-toolbox.register("individual", tools.initRepeat, creator.Individual,
-    toolbox.attr_action, IND_INIT_SIZE)
+toolbox.register("individual", toolbox.session)
+
+toolbox.individual()
+
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+toolbox.register("evaluate", kNN.fitness)
+toolbox.register("mate", tools.cxOnePoint)
+toolbox.register("mutate", mute)
+toolbox.register("select", tools.selNSGA2)
 
 
 def main(size):
     pop = toolbox.population(n=size)
     for ind in pop:
-        ind.sort(key=lambda r: r["date"])   #sort the sequences by date of action
-        ind.username=random.choice(list_user_id)    #add username
-        print(ind.username)
-        print("[")
-        for elt in ind:
-            print(elt)
-        print("]\n")
-    
+        print(ind)   
     
 if __name__ == "__main__":
     SIZE=5
     main(SIZE)
-    print(b-a)
+    #print(b-a)

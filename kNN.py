@@ -94,7 +94,8 @@ def days(list_actions):
 
     return days
 
-#Takles the activity from the file of one user, combine it in one feature vector
+
+#Takes the activity from the file of one user, combine it in one feature vector
 list_actions=[]
 for line in user_file:
     data=line.split(',')
@@ -108,12 +109,13 @@ for line in user_file:
 list_actions.sort(key=lambda r: r["date"])   #sort the sequences by date of action 
 #print(list_actions[0:10])
 #print(list_actions)
-days=days(list_actions)
-X=np.asarray(days)
+session=days(list_actions)
+X=np.asarray(session)
 
 
 #kNN Unsupervised
 nbrs = NearestNeighbors(n_neighbors=NB_NEIGHBORS, algorithm='kd_tree').fit(X)   #kd_tree fastest
+
 
 """
 Fitness for GA. Evaluate if the feature vector is anomalous or not
@@ -145,9 +147,6 @@ def fitness(individual):
 
 if __name__ == "__main__":
 
-    
-
-#    
     ind1=[0.03,1.0,0.0,0.002,0,0]
     ind2=[0.05,1.0,0.0,0.04,0,0]
     fitness(ind1)
