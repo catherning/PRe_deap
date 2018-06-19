@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jun  5 13:43:57 2018
-
-@author: cx10
-"""
-
 import random
 import numpy
 import time
@@ -31,8 +24,21 @@ with open('D:/r6.2/psychometric.csv') as csvfile:
 #Creation of the sequences of actions
 actions=["logon","email","http","device","file"]
 
+# =============================================================================
 
-
+#1 logon
+#2 logoff
+#3 connect
+#4 disconnect
+#5 WWW Download"
+#6 "WWW Upload"
+#7 "WWW Visit
+#8 Send
+#9 View
+#10 open, 
+#11 write, 
+#12 copy
+#13 delete
 def scenario(number):
     file=open('D:/answers/r6.2-'+str(number)+'.csv')
     sequence=[]
@@ -76,37 +82,25 @@ def scenario(number):
             else:
                 sequence.append(9)
     return sequence
-        
-#1 logon
-#2 logoff
-#3 connect
-#4 disconnect
-#5 WWW Download"
-#6 "WWW Upload"
-#7 "WWW Visit
-#8 Send
-#9 View
-#10 open, 
-#11 write, 
-#12 copy
-#13 delete
-    
+
 scenarioNB=int(input('Choose the scenario number to train for (1-5): '))
 attackAnswer=scenario(scenarioNB)
 print('The scenario '+str(scenarioNB)+' is the sequence:')
 print (attackAnswer)
 IND_INIT_SIZE = len(attackAnswer)-2
 MAX_ACTIONS = len(attackAnswer)+5
-    
+
+# =============================================================================
+
 def fitness(ind):
-#    def distanceLevenshtein(answer,i,ind,j):
-#        if min(i,j)==0:
-#            return(max(i,j))
-#        else:
-#            a=distanceLevenshtein(answer,i-1,ind,j)+1
-#            b=distanceLevenshtein(answer,i,ind,j-1)+1
-#            c=distanceLevenshtein(answer,i-1,ind,j-1)+1*(answer[i-1]!=ind[j-1])
-#            return min(a,b,c)
+    def distanceLevenshtein(answer,i,ind,j):
+        if min(i,j)==0:
+            return(max(i,j))
+        else:
+            a=distanceLevenshtein(answer,i-1,ind,j)+1
+            b=distanceLevenshtein(answer,i,ind,j-1)+1
+            c=distanceLevenshtein(answer,i-1,ind,j-1)+1*(answer[i-1]!=ind[j-1])
+            return min(a,b,c)
 
     def Jaccard(answer,ind):
         a=set(answer)
@@ -143,6 +137,7 @@ def fitness(ind):
 
 
 
+# =============================================================================
 
 #creator.create("Fitness", base.Fitness, weights=(-1.0,))
 #creator.create("Individual", list, fitness=creator.Fitness)
@@ -173,6 +168,8 @@ toolbox.register("evaluate", fitness)
 toolbox.register("mate", tools.cxTwoPoint)
 toolbox.register("mutate", mutList)
 toolbox.register("select", tools.selNSGA2)
+
+# =============================================================================
 
 def main(rand,mu,lamb,cxpb,mutpb,ngen):
     random.seed(rand)
@@ -211,9 +208,6 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     list_results.append(logbook[i]['gen'])
     print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
 
-
-#    for ind in hof:
-#        print (ind)
     
     return pop, stats, hof
     

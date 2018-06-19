@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jun 14 13:39:41 2018
-
-@author: cx10
-"""
 import os
 from datetime import datetime
 from sklearn.neighbors import NearestNeighbors
