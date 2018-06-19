@@ -1,12 +1,13 @@
-import random
-
 from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
 
+import random
+import time
 from datetime import datetime
 import kNN
+import numpy
 
 IND_INIT_SIZE = 5
 MAX_ACTIONS = 50
@@ -74,6 +75,11 @@ def session():
     
     return feature_vect
 
+def mute(individual):
+    mutatePt=random.randint(0,len(individual))
+    individual[mutatePt]=random.random()
+    return individual
+
 # =============================================================================
 
 #creator.create("Fitness", base.Fitness, weights=(1.0,))
@@ -81,35 +87,77 @@ def session():
 
 toolbox = base.Toolbox()
 
-
-def mute(individual):
-    mutatePt=random.randint(0,len(individual))
-    individual[mutatePt]=random.random()
-    return individual
-
-
 # Attribute generator
 toolbox.register("attr_action", action)
 toolbox.register("session", session)
 
 # Structure initializers
 toolbox.register("individual", toolbox.session)
-
-toolbox.individual()
+a=toolbox.individual()
+print(a)
+print(a.fitness)
 
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
+#pop = toolbox.population(n=10)
+#for ind in pop:
+#    print(ind)
+#    print(ind.fitness)
 toolbox.register("evaluate", kNN.fitness)
 toolbox.register("mate", tools.cxTwoPoint)
 toolbox.register("mutate", mute)
 toolbox.register("select", tools.selNSGA2)
 
 
-def main(size):
-    pop = toolbox.population(n=size)
-    for ind in pop:
-        print(ind)   
+def main(rand,mu,lamb,cxpb,mutpb,ngen):
+    random.seed(rand)
+    NGEN = ngen
+    MU = mu
+    LAMBDA = lamb
+    CXPB = cxpb
+    MUTPB = mutpb
+    
+    list_results=[rand]
+    
+    pop = toolbox.population(n=MU)
+#    print()
+#    for ind in pop:
+#        print (ind)
+    
+    hof = tools.ParetoFront()
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", numpy.mean, axis=0)
+    stats.register("std", numpy.std, axis=0)
+    stats.register("min", numpy.min, axis=0)
+    stats.register("max", numpy.max, axis=0)
+
+    p,logbook=algorithms.eaMuPlusLambda(pop, toolbox, MU, LAMBDA, CXPB, MUTPB, NGEN, stats,
+                              halloffame=hof,verbose=0)
+    
+    list_min=[]
+    for elt in logbook:
+        list_min.append(elt['min'])
+    min_fit=min(list_min)       #list_min[1]
+    list_results.append(min_fit)
+
+    i=0
+    while(logbook[i]['min']!=min_fit):
+        i+=1
+    list_results.append(logbook[i]['gen'])
+    print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
+
+    
+    return pop, stats, hof
     
 if __name__ == "__main__":
-    SIZE=5
-    main(SIZE)
+    NB_SIMU=10
+
+    ngen = 10
+    mu = 50
+    lamb = 100
+    cxpb = 0.7
+    mutpb = 0.2
+    pb_pace=0.02
+#    print ("Rand   Min_fit   Gen")
+#    for i in range(NB_SIMU):
+#        rand=int(time.clock()*10)
+#        main(rand,mu,lamb,cxpb,mutpb,ngen)

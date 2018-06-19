@@ -76,11 +76,12 @@ def actions(file):
 
 
 #Parallelize a first time
-first_file=int(input("Enter the index of the first file to separate by users BEGIN AT 90: "))
+first_file=int(input("Enter the index of the first file to separate by users BEGIN AT 260: "))
 NB_FILES=int(input("Enter the number of files to separate by users: "))
 last_file=first_file+NB_FILES
 a=datetime.datetime.now()
-print('Estimated end time:'+str(a+datetime.timedelta(minutes=4.4*NB_FILES)))
+print("Begin time : "+str(a))
+print('Estimated end time:'+str(a+datetime.timedelta(minutes=4*NB_FILES)))
 l=list(map(actions,list_files[first_file:last_file]))
 file=open(path+'/users/files_done.csv','a+')
 for elt in l:
@@ -97,7 +98,7 @@ while(input("Do you want to continue ? (y/n): ")=='y' and last_file<=652):
     last_file+=NB_FILES
     
     a=datetime.datetime.now()
-    print('Estimated end time:'+str(a+datetime.timedelta(minutes=4.4*NB_FILES)))    
+    print('Estimated end time:'+str(a+datetime.timedelta(minutes=4*NB_FILES)))    
     l=list(map(actions,list_files[first_file:last_file]))
     file=open(path+'/users/files_done.csv','a+')
     for elt in l:

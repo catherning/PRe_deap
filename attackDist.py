@@ -135,25 +135,6 @@ def fitness(ind):
     fit=1-coef
     return fit,
 
-
-
-# =============================================================================
-
-#creator.create("Fitness", base.Fitness, weights=(-1.0,))
-#creator.create("Individual", list, fitness=creator.Fitness)
-
-toolbox = base.Toolbox()
-
-# Attribute generator
-#toolbox.register("attr_action", action)
-toolbox.register("attr_action", random.randint,1,13)
-
-# Structure initializers
-toolbox.register("individual", tools.initRepeat, creator.Individual,
-    toolbox.attr_action, IND_INIT_SIZE)
-toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-
 def mutList(individual):
     """Mutation that pops or add an element."""
     if random.random() < 0.5:
@@ -163,6 +144,21 @@ def mutList(individual):
         individual.insert(random.randint(0,len(individual)),random.randint(1,13))
         #print(individual)
     return individual,
+
+# =============================================================================
+
+creator.create("Fitness", base.Fitness, weights=(-1.0,))
+creator.create("Individual", list, fitness=creator.Fitness)
+
+toolbox = base.Toolbox()
+
+# Attribute generator
+toolbox.register("attr_action", random.randint,1,13)
+
+# Structure initializers
+toolbox.register("individual", tools.initRepeat, creator.Individual,
+    toolbox.attr_action, IND_INIT_SIZE)
+toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 toolbox.register("evaluate", fitness)
 toolbox.register("mate", tools.cxTwoPoint)
@@ -214,7 +210,7 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
 if __name__ == "__main__":
     NB_SIMU=10
 
-    ngen = 10
+    ngen = 70
     mu = 50
     lamb = 100
     cxpb = 0.7
