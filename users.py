@@ -76,7 +76,7 @@ def actions(file):
 
 
 #Parallelize a first time
-first_file=int(input("Enter the index of the first file to separate by users BEGIN AT 260: "))
+first_file=int(input("Enter the index of the first file to separate by users BEGIN AT 294: "))
 NB_FILES=int(input("Enter the number of files to separate by users: "))
 last_file=first_file+NB_FILES
 a=datetime.datetime.now()
@@ -85,14 +85,14 @@ print('Estimated end time:'+str(a+datetime.timedelta(minutes=4*NB_FILES)))
 l=list(map(actions,list_files[first_file:last_file]))
 file=open(path+'/users/files_done.csv','a+')
 for elt in l:
-    file.writelines(elt+',')
+    file.write(elt+',')
 file.close()
     
 b=datetime.datetime.now()
 print("Task done for files from "+str(first_file)+" ("+list_files[first_file]+") to "+str(last_file-1)+" ("+list_files[last_file-1]+") in "+str(b-a)+" seconds.")
 
 #If we want to do it again 
-while(input("Do you want to continue ? (y/n): ")=='y' and last_file<=652):
+while(input("Do you want to continue ? (y/n): ")=='y' and last_file<=650):  #!!!!!!!!!!!!!!!!!!!!!!!!!!!
     NB_FILES=int(input("Enter the number of files to separate by users: "))
     first_file=last_file
     last_file+=NB_FILES
@@ -102,7 +102,7 @@ while(input("Do you want to continue ? (y/n): ")=='y' and last_file<=652):
     l=list(map(actions,list_files[first_file:last_file]))
     file=open(path+'/users/files_done.csv','a+')
     for elt in l:
-        file.writelines(elt+',')
+        file.write(elt+',')
     file.close()
     b=datetime.datetime.now()
     print("Task done for files from "+str(first_file)+" ("+list_files[first_file]+") to "+str(last_file-1)+" ("+list_files[last_file-1]+") in "+str(b-a)+" seconds.")

@@ -99,12 +99,12 @@ for line in user_file:
 #            print(data)
 #            print(activity)
 #print(list_actions[0:10])
-#CHECK IF IT IS WORKING
+#TODO CHECK IF IT IS WORKING
 list_actions.sort(key=lambda r: r["date"])   #sort the sequences by date of action 
 #print(list_actions[0:10])
 #print(list_actions)
-session=days(list_actions)
-X=np.asarray(session)
+sessions=days(list_actions)
+X=np.asarray(sessions)
 
 
 #kNN Unsupervised
@@ -114,7 +114,7 @@ nbrs = NearestNeighbors(n_neighbors=NB_NEIGHBORS, algorithm='kd_tree').fit(X)   
 """
 Fitness for GA. Evaluate if the feature vector is anomalous or not
 """
-def fitness(individual):
+def distance(individual):
     #Supervised kNN
 #    y=np.zeros(len(X))
 #    y[0]=1
@@ -135,16 +135,15 @@ def fitness(individual):
         
     #Unsupervised kNN
     distances, indices = nbrs.kneighbors([individual])
-    print(distances[0,2]) 
-    #print(indices)
     return distances[0,2]  
 
 if __name__ == "__main__":
-
+    for session in sessions:
+        print(session)
     ind1=[0.03,1.0,0.0,0.002,0,0]
     ind2=[0.05,1.0,0.0,0.04,0,0]
-    fitness(ind1)
-    fitness(ind2)
+    distance(ind1)
+    distance(ind2)
 
 
 

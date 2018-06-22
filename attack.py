@@ -46,7 +46,7 @@ def action():
         action["activity"]=random.choice(["Send","View"])
     return action
 
-
+#Creates the feature vector
 def session():
     ind=[]
     for i in range(IND_INIT_SIZE):
@@ -54,8 +54,11 @@ def session():
     ind.sort(key=lambda r: r["date"])   #sort the sequences by date of action
     
     beginning=ind[0]['date']
-    feature_vect=[0]*6
-    feature_vect[0]=beginning.hour
+    feature_vect=creator.Individual()
+    feature_vect.append(beginning.hour)
+    for i in range(5):
+        feature_vect.append(0)
+
     for act in ind:
         duration=act['date']-beginning
         if act['type']=='logon':
@@ -71,44 +74,43 @@ def session():
     feature_vect[1]=duration.total_seconds()/60
           
     #Normalize the vector
-    feature_vect= [i/max(feature_vect) for i in feature_vect]
-    
+    maxFV=max(feature_vect)
+    for i in range(len(feature_vect)):
+        feature_vect[i]/=maxFV
+        
     return feature_vect
 
 def mute(individual):
-    mutatePt=random.randint(0,len(individual))
-    individual[mutatePt]=random.random()
-    return individual
+    mutatePt=random.randint(0,len(individual)-1)
+    if mutatePt!=1:
+        individual[mutatePt]=random.uniform(0.0, 0.1)
+    return individual,
+
+def fitness(ind):
+    return kNN.distance(ind),
 
 # =============================================================================
 
-#creator.create("Fitness", base.Fitness, weights=(1.0,))
-#creator.create("Individual", list, fitness=creator.Fitness) #,username=None
+creator.create("Fitness", base.Fitness, weights=(1.0,))
+creator.create("Individual", list, fitness=creator.Fitness) #,username=None
 
 toolbox = base.Toolbox()
 
 # Attribute generator
-toolbox.register("attr_action", action)
 toolbox.register("session", session)
 
 # Structure initializers
 toolbox.register("individual", toolbox.session)
-a=toolbox.individual()
-print(a)
-print(a.fitness)
-
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-#pop = toolbox.population(n=10)
-#for ind in pop:
-#    print(ind)
-#    print(ind.fitness)
-toolbox.register("evaluate", kNN.fitness)
+
+
+toolbox.register("evaluate", fitness)
 toolbox.register("mate", tools.cxTwoPoint)
 toolbox.register("mutate", mute)
 toolbox.register("select", tools.selNSGA2)
 
 
-def main(rand,mu,lamb,cxpb,mutpb,ngen):
+def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     random.seed(rand)
     NGEN = ngen
     MU = mu
@@ -116,7 +118,20 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     CXPB = cxpb
     MUTPB = mutpb
     
-    list_results=[rand]
+    if param=="rand" or param=="optimal":
+        list_results=[rand]
+    elif param=="mu":
+        list_results=[mu]
+    elif param=="lamb":
+        list_results=[lamb]
+    elif param=="cross":
+        list_results=[cxpb]
+    elif param=="mutate":
+        list_results=[mutpb]
+    elif param=="ngen":
+        list_results=[ngen]
+    elif param=="original":
+        list_results=[0]
     
     pop = toolbox.population(n=MU)
 #    print()
@@ -133,31 +148,77 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     p,logbook=algorithms.eaMuPlusLambda(pop, toolbox, MU, LAMBDA, CXPB, MUTPB, NGEN, stats,
                               halloffame=hof,verbose=0)
     
-    list_min=[]
+    list_max=[]
     for elt in logbook:
-        list_min.append(elt['min'])
-    min_fit=min(list_min)       #list_min[1]
-    list_results.append(min_fit)
+        list_max.append(elt['max'][0])
+    max_fit=max(list_max)       #list_max[1]
+    list_results.append(max_fit)
 
     i=0
-    while(logbook[i]['min']!=min_fit):
+    while(logbook[i]['max']!=max_fit):
         i+=1
     list_results.append(logbook[i]['gen'])
-    print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
-
+    #print(list_results[2])
+    print ("{0}     {1}    {2}".format(round(list_results[0],3),round(list_results[1],3),round(list_results[2],3)))
+    for ind in hof:
+        print(ind)
     
     return pop, stats, hof
     
 if __name__ == "__main__":
+    #param='mu'
+    
     NB_SIMU=10
-
-    ngen = 10
+    
+    rand=69
+    ngen = 100
     mu = 50
-    lamb = 100
-    cxpb = 0.7
-    mutpb = 0.2
+    lamb = 70
+    cxpb = 0.8
+    mutpb = 0.05
     pb_pace=0.02
-#    print ("Rand   Min_fit   Gen")
-#    for i in range(NB_SIMU):
-#        rand=int(time.clock()*10)
-#        main(rand,mu,lamb,cxpb,mutpb,ngen)
+    param_list=["original","rand","mu","lamb","cross","mutate","optimal"]
+    
+    for param in param_list:
+        print("\n")
+        
+        if param=="original":
+            main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+            
+        if param=="rand":
+            print ("Rand   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                rand=int(time.clock()*10)
+                main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+        elif param=="mu":
+            print ("Mu   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                mu=20
+                main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)
+        elif param=="lamb":
+            print ("Lambda   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                lamb=70
+                main(rand,mu,lamb+i,cxpb,mutpb,ngen,param)
+        elif param=="cross":
+            print ("CrossProba   Max_fit   Gen")
+            NB_SIMU=int((1-mutpb)/pb_pace)
+            for i in range (NB_SIMU):
+                cxpb=0
+                main(rand,mu,lamb,cxpb+i*pb_pace,mutpb,ngen,param)
+        elif param=="mutate":
+            NB_SIMU=int((1-cxpb)/pb_pace)
+            print ("MutPb   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                mutpb=0
+                main(rand,mu+i,lamb,cxpb,mutpb+i*pb_pace,ngen,param)
+        elif param=="optimal":
+            NB_SIMU=50
+            mu=27
+            lamb=112
+            cxpb=0.18
+            mutpb=0.26
+            print ("Rand   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                rand=int(time.clock()*10)
+                main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)

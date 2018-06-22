@@ -53,15 +53,24 @@ def split(action, delimiter=',', row_limit=10000,
                 
         if action=='device' or action=='logon':
             current_out_writer.writerow(row[1:(len(row))])
+        elif action=='http':
+            current_out_writer.writerow(row[1:4]+[row[5]])
         else:
             current_out_writer.writerow(row[1:(len(row)-1)])
             
 path='D:/r6.2/'
 #list_actions=['device','file','logon','email','http']
 list_actions=['http']
+#file=open(path+'http.csv')
+#for i,line in enumerate(file):
+#    if i<3:
+#        print(line)
+#    else:
+#        break
+
 for action in list_actions:
     file=path+action+'.csv'
     nb_row=50000
     if action=='http':
         nb_row=400000
-    split(action,row_limit=nb_row,output_name_template=action+'_%s.csv',output_path=path+'splitted/',keep_headers=False)
+    split(action,row_limit=nb_row,output_name_template=action+'_%s.csv',output_path=path+'splittedHTTP/',keep_headers=False)
