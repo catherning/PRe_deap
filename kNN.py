@@ -1,17 +1,16 @@
 import os
-from datetime import datetime
+from datetime import date,datetime
 from sklearn.neighbors import NearestNeighbors
 
 import numpy as np
-#import matplotlib.pyplot as plt
-#from matplotlib.colors import ListedColormap
-#from sklearn import neighbors
 
 
 path='D:/r6.2/users/'
 list_users=os.listdir(path)
+attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 
-user=list_users[454]
+user=list_users[2]
+#user=attackers[0]+".csv" #first insider attacker
 user_file=open(path+user)
 NB_NEIGHBORS=3
 
@@ -25,19 +24,21 @@ def action(data):
     action["pc"]=data[2]
     
     #all other attributes useless if using HMM ?
-    if action["type"]=="l":
+    if action["type"]=="l" or action["type"]=="h":
         action["activity"]=data[3]#[:len(data[3])-1]
-    elif action["type"]=="h":
-        action["activity"]=data[4]#[:len(data[4])-1]
-        action["url"]=data[3]
+    #elif action["type"]=="h":
+        #action["activity"]=data[3]#[:len(data[4])-1]
+        #action["url"]=data[3]
     elif action["type"]=="d":
         action["activity"]=data[4][:len(data[4])-1]
         action["file_tree"]=data[3]
     elif action["type"]=="f":
+        #print(data)
         action["activity"]=data[4]
         action["to_removable_media"]=data[5]
         action["from_removable_media"]=data[6]#[:len(data[6])-1]
         action["filename"]=data[3]
+        #print(action["from_removable_media"])
     elif action["type"]=="e":
         action["activity"]=data[7]
         action["size"]=data[8]
@@ -64,6 +65,9 @@ def days(list_actions):
     beginning=list_actions[0]['date']
     feature_vect=[0]*6
     feature_vect[0]=beginning.hour
+    #date=[list_actions[0]['date'].date()]
+    date=[]
+    
     for act in list_actions:
         if act['date'].date()==beginning.date():
             duration=act['date']-beginning
@@ -71,11 +75,12 @@ def days(list_actions):
                 feature_vect[2]+=1
             elif act['type']=='e' and act['activity']=='Send':
                 feature_vect[3]+=1
-            elif act['type']=='f' and (act["to_removable_media"]=='TRUE' or act["from_removable_media"]=='TRUE'):
+            elif act['type']=='f' and (act["to_removable_media"]=='True' or act["from_removable_media"]=='True'):
                 feature_vect[4]=1
             elif act["type"]=="h":
                 feature_vect[5]+=1
         else:
+            date.append(beginning.date())
             beginning=act['date']
             feature_vect[1]=duration.total_seconds()/60
             days.append(feature_vect)
@@ -86,7 +91,8 @@ def days(list_actions):
     for i in range (len(days)):
         days[i]= [j/max(days[i]) for j in days[i]]
 
-    return days
+    #return days
+    return date,days
 
 
 #Takes the activity from the file of one user, combine it in one feature vector
@@ -95,15 +101,14 @@ for line in user_file:
     data=line.split(',')
     activity=action(data)
     list_actions.append(activity)
-#        if data[0]=='t':~check if there's a \n
-#            print(data)
-#            print(activity)
-#print(list_actions[0:10])
-#TODO CHECK IF IT IS WORKING
+
 list_actions.sort(key=lambda r: r["date"])   #sort the sequences by date of action 
-#print(list_actions[0:10])
-#print(list_actions)
-sessions=days(list_actions)
+
+session_date,sessions=days(list_actions)
+dico_session={}
+for i in range(len(sessions)):
+    dico_session[session_date[i]]=sessions[i]
+    
 X=np.asarray(sessions)
 
 
@@ -138,12 +143,17 @@ def distance(individual):
     return distances[0,2]  
 
 if __name__ == "__main__":
-    for session in sessions:
-        print(session)
+#    for session in sessions:
+#        print(session)
+    
+    #First day of attack
+    for i in range(7):
+        key=date(2010,8,18+i)
+        if key in dico_session:
+            print(key)
+            print(dico_session[key])    
+    
     ind1=[0.03,1.0,0.0,0.002,0,0]
     ind2=[0.05,1.0,0.0,0.04,0,0]
     distance(ind1)
     distance(ind2)
-
-
-

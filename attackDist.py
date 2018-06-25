@@ -142,7 +142,7 @@ def mutList(individual):
             individual.pop(random.randint(0,len(individual)-1))
     else:
         individual.insert(random.randint(0,len(individual)),random.randint(1,13))
-        #print(individual)
+        
     return individual,
 
 # =============================================================================
@@ -178,9 +178,6 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     list_results=[rand]
     
     pop = toolbox.population(n=MU)
-#    print()
-#    for ind in pop:
-#        print (ind)
     
     hof = tools.ParetoFront()
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -204,6 +201,8 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     list_results.append(logbook[i]['gen'])
     print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
 
+    for ind in hof:
+        print(ind)
     
     return pop, stats, hof
     
