@@ -10,7 +10,8 @@ list_users=os.listdir(path)
 attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 
 user=list_users[2]
-#user=attackers[0]+".csv" #first insider attacker
+#usr=attackers[4]
+#user=usr+".csv" #first insider attacker
 user_file=open(path+user)
 NB_NEIGHBORS=3
 
@@ -76,7 +77,7 @@ def days(list_actions):
             elif act['type']=='e' and act['activity']=='Send':
                 feature_vect[3]+=1
             elif act['type']=='f' and (act["to_removable_media"]=='True' or act["from_removable_media"]=='True'):
-                feature_vect[4]=1
+                feature_vect[4]=+1
             elif act["type"]=="h":
                 feature_vect[5]+=1
         else:
@@ -145,13 +146,47 @@ def distance(individual):
 if __name__ == "__main__":
 #    for session in sessions:
 #        print(session)
-    
-    #First day of attack
-    for i in range(7):
-        key=date(2010,8,18+i)
-        if key in dico_session:
-            print(key)
-            print(dico_session[key])    
+    #Sessions of attack of the first scenario (and the two previous days)
+    if 'usr' in vars():
+        year=2010
+        if usr==attackers[0]:
+            duration=9
+            begin_date=16
+            month=8
+        elif usr==attackers[1]:
+            duration=25
+            begin_date=3
+            month=2
+            year=2011
+        elif usr==attackers[2]:
+            duration=3
+            begin_date=10
+            month=8
+        elif usr==attackers[3]:
+            duration=7
+            begin_date=19
+            month=4
+            year=2011
+        elif usr==attackers[4]:
+            duration=5
+            begin_date=8
+            month=10
+            
+        print(usr)
+        for i in range(duration):
+            key=date(year,month,begin_date+i)
+            if key in dico_session:
+                #print(key)
+                print(dico_session[key])
+        if usr==attackers[1]:
+            for i in range(4):
+                key=date(year,month+1,1+i)
+                if key in dico_session:
+                    #print(key)
+                    print(dico_session[key])
+    else:
+        for ses in sessions:
+            print(ses)
     
     ind1=[0.03,1.0,0.0,0.002,0,0]
     ind2=[0.05,1.0,0.0,0.04,0,0]

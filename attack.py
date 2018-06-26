@@ -82,8 +82,12 @@ def session():
 
 def mute(individual):
     mutatePt=random.randint(0,len(individual)-1)
-    if mutatePt!=1:
-        individual[mutatePt]=random.uniform(0.0, 0.1)
+    if mutatePt==0:
+        individual[mutatePt]=random.uniform(0.0, 0.02)
+    elif mutatePt>=2 and mutatePt<=4:
+        individual[mutatePt]=random.uniform(0.0, 0.005)
+    elif mutatePt==5:
+        individual[mutatePt]=random.uniform(0.0, 0.07)
     return individual,
 
 def fitness(ind):
@@ -158,10 +162,10 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     while(logbook[i]['max']!=max_fit):
         i+=1
     list_results.append(logbook[i]['gen'])
-    #print(list_results[2])
-    print ("{0}     {1}    {2}".format(round(list_results[0],3),round(list_results[1],3),round(list_results[2],3)))
-    for ind in hof:
-        print(ind)
+
+    print ("{0}     {1}    {2}    {3}".format(round(list_results[1],3),round(list_results[2],3),round(list_results[0],3),hof[0]))
+#    for ind in hof:
+#        print(ind)
     
     return pop, stats, hof
     
