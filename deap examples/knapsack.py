@@ -166,25 +166,25 @@ if __name__ == "__main__":
                 main(rand,mu,lamb,cxpb,mutpb,ngen,param)
         elif param=="mu":
             print ("Mu   Max_fit   Gen")
-            for i in range (NB_SIMU):
-                mu=20
+            mu=20
+            for i in range (NB_SIMU):            
                 main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)
         elif param=="lamb":
             print ("Lambda   Max_fit   Gen")
+            lamb=70
             for i in range (NB_SIMU):
-                lamb=70
                 main(rand,mu,lamb+i,cxpb,mutpb,ngen,param)
         elif param=="cross":
             print ("CrossProba   Max_fit   Gen")
             NB_SIMU=int((1-mutpb)/pb_pace)
+            cxpb=0
             for i in range (NB_SIMU):
-                cxpb=0
                 main(rand,mu,lamb,cxpb+i*pb_pace,mutpb,ngen,param)
         elif param=="mutate":
             NB_SIMU=int((1-cxpb)/pb_pace)
             print ("MutPb   Max_fit   Gen")
-            for i in range (NB_SIMU):
-                mutpb=0
+            mutpb=0
+            for i in range (NB_SIMU): 
                 main(rand,mu+i,lamb,cxpb,mutpb+i*pb_pace,ngen,param)
         elif param=="optimal":
             NB_SIMU=50

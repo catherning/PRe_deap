@@ -7,7 +7,11 @@ import random
 import time
 from datetime import datetime
 import kNN
-import numpy
+import numpy as np
+
+import pandas
+from pandas.tools.plotting import parallel_coordinates
+import matplotlib.pyplot as plt
 
 IND_INIT_SIZE = 5
 MAX_ACTIONS = 50
@@ -80,19 +84,14 @@ def session():
         
     return feature_vect
 
-
 def mute(individual):
     mutatePt=random.randint(0,len(individual)-1)
     if mutatePt==0:
-        individual[mutatePt]=random.uniform(kNN.features_min[0], kNN.features_max[0])
-    elif mutatePt==2:
-        individual[mutatePt]=random.uniform(kNN.features_min[1], kNN.features_max[1])
-    elif mutatePt==3:
-        individual[mutatePt]=random.uniform(kNN.features_min[2], kNN.features_max[2])
-    elif mutatePt==4:
-        individual[mutatePt]=random.uniform(kNN.features_min[3], kNN.features_max[3])
+        individual[mutatePt]=random.uniform(0.0, 0.02)
+    elif mutatePt>=2 and mutatePt<=4:
+        individual[mutatePt]=random.uniform(0.0, 0.005)
     elif mutatePt==5:
-        individual[mutatePt]=random.uniform(kNN.features_min[4], kNN.features_max[4])
+        individual[mutatePt]=random.uniform(0.0, 0.07)
     return individual,
 
 def fitness(ind):
@@ -149,10 +148,10 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     
     hof = tools.ParetoFront()
     stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("avg", numpy.mean, axis=0)
-    stats.register("std", numpy.std, axis=0)
-    stats.register("min", numpy.min, axis=0)
-    stats.register("max", numpy.max, axis=0)
+    stats.register("avg", np.mean, axis=0)
+    stats.register("std", np.std, axis=0)
+    stats.register("min", np.min, axis=0)
+    stats.register("max", np.max, axis=0)
 
     p,logbook=algorithms.eaMuPlusLambda(pop, toolbox, MU, LAMBDA, CXPB, MUTPB, NGEN, stats,
                               halloffame=hof,verbose=0)
@@ -173,6 +172,25 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
 #        print(ind)
     
     return pop, stats, hof
+
+def plot(list_hof,param):
+    plt.figure()
+#    ind = np.arange(5)
+#    width=0.05 
+#    fig, ax = plt.subplots()
+#    rects1 = ax.bar(ind, men_means, width, color='r')
+    
+#    df2 = pandas.DataFrame(list_hof, columns=name)
+#
+#    df2.plot(kind='bar');
+#    plt.title(param)
+    
+    df = pandas.DataFrame(list_hof,
+                          columns=["name","begin hour","logon","emails",'device','web'])
+    parallel_coordinates(df,"name")
+    plt.title(param)
+    plt.show()
+
     
 if __name__ == "__main__":
     #param='mu'
@@ -185,49 +203,67 @@ if __name__ == "__main__":
     lamb = 70
     cxpb = 0.8
     mutpb = 0.05
-    pb_pace=0.02
-    param_list=["original","rand","mu","lamb","cross","mutate","optimal"]
+    pb_pace=0.05
+    param_list=["original","rand","mu","lamb","cross","mutate"] #"optimal"
+    
     
     for param in param_list:
         print("\n")
+        list_hof=[]
         
         if param=="original":
-            main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+            pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+            list_hof.append(['original']+[hof[0][0]]+list(hof[0][2:]))
             
         if param=="rand":
             print ("Max_fit   Gen   Rand")
             for i in range (NB_SIMU):
                 rand=int(time.clock()*10)
-                main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+                pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+                list_hof.append([rand]+[hof[0][0]]+list(hof[0][2:]))
+                
+            
         elif param=="mu":
             print ("Max_fit   Gen   Mu")
-            for i in range (NB_SIMU):
-                mu=20
-                main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)
+            mu=20
+            for i in range (NB_SIMU):      
+                pop,stats,hof=main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)
+                list_hof.append([mu+i]+[hof[0][0]]+list(hof[0][2:]))
+            
         elif param=="lamb":
             print ("Max_fit   Gen    Lambda")
+            lamb=70
             for i in range (NB_SIMU):
-                lamb=70
-                main(rand,mu,lamb+i,cxpb,mutpb,ngen,param)
+                pop,stats,hof=main(rand,mu,lamb+i,cxpb,mutpb,ngen,param)
+                list_hof.append([lamb+i]+[hof[0][0]]+list(hof[0][2:]))
+
+         
         elif param=="cross":
             print ("Max_fit   Gen   CrossProba")
             NB_SIMU=int((1-mutpb)/pb_pace)
-            for i in range (NB_SIMU):
-                cxpb=0
-                main(rand,mu,lamb,cxpb+i*pb_pace,mutpb,ngen,param)
+            cxpb=0
+            for i in range (NB_SIMU):          
+                pop,stats,hof=main(rand,mu,lamb,cxpb+i*pb_pace,mutpb,ngen,param)
+                list_hof.append([round(cxpb+i*pb_pace,3)]+[hof[0][0]]+list(hof[0][2:]))
+
+         
         elif param=="mutate":
             NB_SIMU=int((1-cxpb)/pb_pace)
             print ("Max_fit   Gen   MutPb")
-            for i in range (NB_SIMU):
-                mutpb=0
-                main(rand,mu+i,lamb,cxpb,mutpb+i*pb_pace,ngen,param)
+            mutpb=0
+            for i in range (NB_SIMU):  
+                pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb+i*pb_pace,ngen,param)
+                list_hof.append([round(mutpb+i*pb_pace,3)]+[hof[0][0]]+list(hof[0][2:]))
+
         elif param=="optimal":
             NB_SIMU=50
             mu=27
             lamb=112
             cxpb=0.18
             mutpb=0.26
-            print ("Max_fit   Gen   Rand")
+            print ("Rand   Max_fit   Gen")
             for i in range (NB_SIMU):
                 rand=int(time.clock()*10)
-                main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)
+                pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+        
+        plot(list_hof,param)

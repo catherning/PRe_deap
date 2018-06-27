@@ -9,9 +9,9 @@ path='D:/r6.2/users/'
 list_users=os.listdir(path)
 attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 
-#user=list_users[2]
-usr=attackers[0]
-user=usr+".csv" #first insider attacker
+user=list_users[2]
+#usr=attackers[0]
+#user=usr+".csv" #first insider attacker
 user_file=open(path+user)
 NB_NEIGHBORS=3
 
@@ -113,20 +113,20 @@ for i in range(len(sessions)):
 
 
 #Takes 30 first sessions (the date begins the 4th January, the earliest attack is in July)
-X=np.asarray(sessions[:30])
+X=np.asarray(sessions)
 
 #To get the upper limit for the possible values when we mutate the individuals
 features_max=[]
 features_max.append(max(X[:,0])*1.2)
 for i in range(2,6):
     features_max.append((max(X[:,i])+0.0001)*1.2) #*1.2 to allow a small range, +0.0001 in case the max is one, but an anomalous attack can change the behavior
-print(features_max)
+#'print(features_max)
 
 features_min=[]
 features_min.append(min(X[:,0])*0.6)
 for i in range(2,6):
     features_min.append(min(X[:,i])*0.6) #*1.2 to allow a small range, +0.0001 in case the max is one, but an anomalous attack can change the behavior
-print(features_min)
+#print(features_min)
 
 
 #kNN Unsupervised
@@ -199,9 +199,9 @@ if 'usr' in vars():
                 #print(key)
                 #print(dico_session[key])
                 attacks.append(dico_session[key])
-else:
-    for ses in sessions:
-        print(ses)
+#else:
+#    for ses in sessions:
+#        print(ses)
 
 
 if __name__ == "__main__":
