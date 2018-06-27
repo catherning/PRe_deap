@@ -80,14 +80,19 @@ def session():
         
     return feature_vect
 
+
 def mute(individual):
     mutatePt=random.randint(0,len(individual)-1)
     if mutatePt==0:
-        individual[mutatePt]=random.uniform(0.0, 0.02)
-    elif mutatePt>=2 and mutatePt<=4:
-        individual[mutatePt]=random.uniform(0.0, 0.005)
+        individual[mutatePt]=random.uniform(kNN.features_min[0], kNN.features_max[0])
+    elif mutatePt==2:
+        individual[mutatePt]=random.uniform(kNN.features_min[1], kNN.features_max[1])
+    elif mutatePt==3:
+        individual[mutatePt]=random.uniform(kNN.features_min[2], kNN.features_max[2])
+    elif mutatePt==4:
+        individual[mutatePt]=random.uniform(kNN.features_min[3], kNN.features_max[3])
     elif mutatePt==5:
-        individual[mutatePt]=random.uniform(0.0, 0.07)
+        individual[mutatePt]=random.uniform(kNN.features_min[4], kNN.features_max[4])
     return individual,
 
 def fitness(ind):
@@ -190,29 +195,29 @@ if __name__ == "__main__":
             main(rand,mu,lamb,cxpb,mutpb,ngen,param)
             
         if param=="rand":
-            print ("Rand   Max_fit   Gen")
+            print ("Max_fit   Gen   Rand")
             for i in range (NB_SIMU):
                 rand=int(time.clock()*10)
                 main(rand,mu,lamb,cxpb,mutpb,ngen,param)
         elif param=="mu":
-            print ("Mu   Max_fit   Gen")
+            print ("Max_fit   Gen   Mu")
             for i in range (NB_SIMU):
                 mu=20
                 main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)
         elif param=="lamb":
-            print ("Lambda   Max_fit   Gen")
+            print ("Max_fit   Gen    Lambda")
             for i in range (NB_SIMU):
                 lamb=70
                 main(rand,mu,lamb+i,cxpb,mutpb,ngen,param)
         elif param=="cross":
-            print ("CrossProba   Max_fit   Gen")
+            print ("Max_fit   Gen   CrossProba")
             NB_SIMU=int((1-mutpb)/pb_pace)
             for i in range (NB_SIMU):
                 cxpb=0
                 main(rand,mu,lamb,cxpb+i*pb_pace,mutpb,ngen,param)
         elif param=="mutate":
             NB_SIMU=int((1-cxpb)/pb_pace)
-            print ("MutPb   Max_fit   Gen")
+            print ("Max_fit   Gen   MutPb")
             for i in range (NB_SIMU):
                 mutpb=0
                 main(rand,mu+i,lamb,cxpb,mutpb+i*pb_pace,ngen,param)
@@ -222,7 +227,7 @@ if __name__ == "__main__":
             lamb=112
             cxpb=0.18
             mutpb=0.26
-            print ("Rand   Max_fit   Gen")
+            print ("Max_fit   Gen   Rand")
             for i in range (NB_SIMU):
                 rand=int(time.clock()*10)
                 main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)

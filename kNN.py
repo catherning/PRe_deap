@@ -9,9 +9,9 @@ path='D:/r6.2/users/'
 list_users=os.listdir(path)
 attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 
-user=list_users[2]
-#usr=attackers[4]
-#user=usr+".csv" #first insider attacker
+#user=list_users[2]
+usr=attackers[0]
+user=usr+".csv" #first insider attacker
 user_file=open(path+user)
 NB_NEIGHBORS=3
 
@@ -109,8 +109,24 @@ session_date,sessions=days(list_actions)
 dico_session={}
 for i in range(len(sessions)):
     dico_session[session_date[i]]=sessions[i]
-    
-X=np.asarray(sessions)
+
+
+
+#Takes 30 first sessions (the date begins the 4th January, the earliest attack is in July)
+X=np.asarray(sessions[:30])
+
+#To get the upper limit for the possible values when we mutate the individuals
+features_max=[]
+features_max.append(max(X[:,0])*1.2)
+for i in range(2,6):
+    features_max.append((max(X[:,i])+0.0001)*1.2) #*1.2 to allow a small range, +0.0001 in case the max is one, but an anomalous attack can change the behavior
+print(features_max)
+
+features_min=[]
+features_min.append(min(X[:,0])*0.6)
+for i in range(2,6):
+    features_min.append(min(X[:,i])*0.6) #*1.2 to allow a small range, +0.0001 in case the max is one, but an anomalous attack can change the behavior
+print(features_min)
 
 
 #kNN Unsupervised
@@ -143,50 +159,56 @@ def distance(individual):
     distances, indices = nbrs.kneighbors([individual])
     return distances[0,2]  
 
+if 'usr' in vars():
+    attacks=[]
+    year=2010
+    if usr==attackers[0]:
+        duration=9
+        begin_date=16
+        month=8
+    elif usr==attackers[1]:
+        duration=25
+        begin_date=3
+        month=2
+        year=2011
+    elif usr==attackers[2]:
+        duration=3
+        begin_date=10
+        month=8
+    elif usr==attackers[3]:
+        duration=7
+        begin_date=19
+        month=4
+        year=2011
+    elif usr==attackers[4]:
+        duration=5
+        begin_date=8
+        month=10
+        
+    print(usr)
+    for i in range(duration):
+        key=date(year,month,begin_date+i)
+        if key in dico_session:
+            #print(key)
+            #print(dico_session[key])
+            attacks.append(dico_session[key])
+    if usr==attackers[1]:
+        for i in range(4):
+            key=date(year,month+1,1+i)
+            if key in dico_session:
+                #print(key)
+                #print(dico_session[key])
+                attacks.append(dico_session[key])
+else:
+    for ses in sessions:
+        print(ses)
+
+
 if __name__ == "__main__":
 #    for session in sessions:
 #        print(session)
     #Sessions of attack of the first scenario (and the two previous days)
-    if 'usr' in vars():
-        year=2010
-        if usr==attackers[0]:
-            duration=9
-            begin_date=16
-            month=8
-        elif usr==attackers[1]:
-            duration=25
-            begin_date=3
-            month=2
-            year=2011
-        elif usr==attackers[2]:
-            duration=3
-            begin_date=10
-            month=8
-        elif usr==attackers[3]:
-            duration=7
-            begin_date=19
-            month=4
-            year=2011
-        elif usr==attackers[4]:
-            duration=5
-            begin_date=8
-            month=10
-            
-        print(usr)
-        for i in range(duration):
-            key=date(year,month,begin_date+i)
-            if key in dico_session:
-                #print(key)
-                print(dico_session[key])
-        if usr==attackers[1]:
-            for i in range(4):
-                key=date(year,month+1,1+i)
-                if key in dico_session:
-                    #print(key)
-                    print(dico_session[key])
-    else:
-        for ses in sessions:
-            print(ses)
+
     
     ind1=[0.03,1.0,0.0,0.002,0,0]
     ind2=[0.05,1.0,0.0,0.04,0,0]
