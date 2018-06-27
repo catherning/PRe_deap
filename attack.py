@@ -87,11 +87,15 @@ def session():
 def mute(individual):
     mutatePt=random.randint(0,len(individual)-1)
     if mutatePt==0:
-        individual[mutatePt]=random.uniform(0.0, 0.02)
-    elif mutatePt>=2 and mutatePt<=4:
-        individual[mutatePt]=random.uniform(0.0, 0.005)
+        individual[mutatePt]=random.uniform(kNN.features_min[0], kNN.features_max[0])
+    elif mutatePt==2:
+        individual[mutatePt]=random.uniform(kNN.features_min[1], kNN.features_max[1])
+    elif mutatePt==3:
+        individual[mutatePt]=random.uniform(kNN.features_min[2], kNN.features_max[2])
+    elif mutatePt==4:
+        individual[mutatePt]=random.uniform(kNN.features_min[3], kNN.features_max[3])
     elif mutatePt==5:
-        individual[mutatePt]=random.uniform(0.0, 0.07)
+        individual[mutatePt]=random.uniform(kNN.features_min[4], kNN.features_max[4])
     return individual,
 
 def fitness(ind):
