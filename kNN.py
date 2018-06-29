@@ -9,9 +9,9 @@ path='D:/r6.2/users/'
 list_users=os.listdir(path)
 attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 
-user=list_users[2]
-#usr=attackers[0]
-#user=usr+".csv" #first insider attacker
+#user=list_users[2]
+usr=attackers[4]
+user=usr+".csv" #first insider attacker
 user_file=open(path+user)
 NB_NEIGHBORS=3
 
@@ -112,7 +112,7 @@ for i in range(len(sessions)):
 
 
 
-#Takes 30 first sessions (the date begins the 4th January, the earliest attack is in July)
+#TODO Takes 90 first sessions (the date begins the 4th January, the earliest attack is in July)
 X=np.asarray(sessions)
 
 #To get the upper limit for the possible values when we mutate the individuals
@@ -160,7 +160,7 @@ def distance(individual):
     return distances[0,2]  
 
 if 'usr' in vars():
-    attacks=[]
+    attacks=[]  #TODO later, to compare the results with the attacks in this list, using distance or kNN
     year=2010
     if usr==attackers[0]:
         duration=9
@@ -185,32 +185,25 @@ if 'usr' in vars():
         begin_date=8
         month=10
         
-    print(usr)
+    print(usr+' attacks')
     for i in range(duration):
         key=date(year,month,begin_date+i)
         if key in dico_session:
             #print(key)
-            #print(dico_session[key])
+            print(dico_session[key])
             attacks.append(dico_session[key])
     if usr==attackers[1]:
         for i in range(4):
             key=date(year,month+1,1+i)
             if key in dico_session:
                 #print(key)
-                #print(dico_session[key])
+                print(dico_session[key])
                 attacks.append(dico_session[key])
-#else:
-#    for ses in sessions:
-#        print(ses)
+                
+
 
 
 if __name__ == "__main__":
-#    for session in sessions:
-#        print(session)
-    #Sessions of attack of the first scenario (and the two previous days)
-
-    
-    ind1=[0.03,1.0,0.0,0.002,0,0]
-    ind2=[0.05,1.0,0.0,0.04,0,0]
-    distance(ind1)
-    distance(ind2)
+    print('begin,duration,logon,emails,media,web')
+    for i in range(50):
+        print(sessions[i])

@@ -96,6 +96,19 @@ def mute(individual):
         individual[mutatePt]=random.uniform(kNN.features_min[3], kNN.features_max[3])
     elif mutatePt==5:
         individual[mutatePt]=random.uniform(kNN.features_min[4], kNN.features_max[4])
+
+    return individual,
+
+
+def mute2(individual):
+    mutatePt=random.randint(0,len(individual)-1)
+    if mutatePt==0:
+        individual[mutatePt]=random.uniform(0.0, 0.02)
+    elif mutatePt>=2 and mutatePt<=4:
+        individual[mutatePt]=random.uniform(0.0, 0.005)
+    elif mutatePt==5:
+        individual[mutatePt]=random.uniform(0.0, 0.07)
+        
     return individual,
 
 def fitness(ind):
