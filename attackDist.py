@@ -191,7 +191,7 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     
     list_min=[]
     for elt in logbook:
-        list_min.append(elt['min'])
+        list_min.append(elt['min'][0])
     min_fit=min(list_min)       #list_min[1]
     list_results.append(min_fit)
 
@@ -199,19 +199,16 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     while(logbook[i]['min']!=min_fit):
         i+=1
     list_results.append(logbook[i]['gen'])
-    print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
-
-    for ind in hof:
-        print(ind)
+    print ("{0}     {1}    {2}   {3}".format(list_results[0],list_results[1],list_results[2],hof[0]))
     
     return pop, stats, hof
     
 if __name__ == "__main__":
     NB_SIMU=10
 
-    ngen = 70
-    mu = 50
-    lamb = 100
+    ngen = 10
+    mu = 10
+    lamb = 50
     cxpb = 0.7
     mutpb = 0.2
     pb_pace=0.02

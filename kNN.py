@@ -190,14 +190,14 @@ if 'usr' in vars():
         key=date(year,month,begin_date+i)
         if key in dico_session:
             #print(key)
-            print(dico_session[key])
+            #print(dico_session[key])
             attacks.append(dico_session[key])
     if usr==attackers[1]:
         for i in range(4):
             key=date(year,month+1,1+i)
             if key in dico_session:
                 #print(key)
-                print(dico_session[key])
+                #print(dico_session[key])
                 attacks.append(dico_session[key])
                 
 
