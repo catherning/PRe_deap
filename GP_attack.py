@@ -4,13 +4,16 @@ from deap import creator
 from deap import tools
 from deap import gp
 
+#import operator
 import os
 import kNN
 import random
 import time
 import numpy
 from sklearn.neighbors import NearestNeighbors
+from math import sqrt
 
+MAX_ACTIONS=150
 NB_ACTIONS=13
 random.seed(9)
 path='D:/r6.2/users/'
@@ -91,21 +94,12 @@ for line in user_file:
 
 list_actions.sort(key=lambda r: r["date"])   #sort the sequences by date of action 
 
-
 session_date,sessions=daysSeq(list_actions)
-
     
 dico_session={}
 for i in range(len(sessions)):
     dico_session[session_date[i]]=sessions[i]
 
-
-#TODO Takes 90 first sessions (the date begins the 4th January, the earliest attack is in July)
-X=numpy.asarray(sessions)
-#print(X)
-
-#kNN Unsupervised
-nbrs = NearestNeighbors(n_neighbors=NB_NEIGHBORS, algorithm='kd_tree').fit(X)   #kd_tree fastest
 
 ### Functions set
 
@@ -122,11 +116,12 @@ def mul(left,right):
     return left
 
 def div(left, right):
-#    try:
-     left= left[0] // right[0]
+    try:
+     left[0]= left[0] // right[0]
      return left
-#    except ZeroDivisionError:
-#        return 1
+    except ZeroDivisionError:
+        left[0]=1
+        return left
 
 def concatenate(left,right):
     return left+right
@@ -138,19 +133,43 @@ def repeat(left):
 #def if_then_else(condition, out1, out2):
 #    out1() if condition() else out2()
     
+    
 """
 Fitness for GA. Evaluate if the feature vector is anomalous or not
-"""
-def distance(individual):
-    #Unsupervised kNN
-    distances, indices = nbrs.kneighbors([individual])
-    return distances[0,2]  
+"""    
+def distance(seq):
+    def Cosine(dataseq,seq):
+        a=[0]*14
+        b=[0]*14
+        for elt in dataseq:
+            a[elt]+=1
+        for elt in seq:
+            #print(elt)
+            b[elt]+=1
+        dot=sum(i[0] * i[1] for i in zip(a, b))
+        normA=sqrt(sum(i**2 for i in a))
+        normB=sqrt(sum(i**2 for i in b))
+        return 1-(dot/(normA*normB))
     
-def evalkNN(individual):
-    func = toolbox.compile(expr=individual)
-    print(func)
+#    if len(seq)>MAX_ACTIONS:
+#        return 0
+#    elif len(seq)<=1:
+#        return 0
+    
+    #fit=distanceLevenshtein(attackAnswer,len(attackAnswer),ind,len(ind))
+    #coef=Jaccard(attackAnswer,ind)
+    maxi=0
+    for i in range(30):
+        if maxi<Cosine(sessions[i],seq):
+            maxi=Cosine(sessions[i],seq)
+    #print(maxi)
+    return maxi
 
-    return distance(func),
+def fitness(individual):
+    seq = toolbox.compile(expr=individual)
+    dist=distance(seq)
+    
+    return dist,
 
 # =============================================================================
     
@@ -165,8 +184,8 @@ pset.addPrimitive(repeat, 1)
 for i in range(1,14):
     pset.addTerminal([i])
 
-#creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-#creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
+creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
 
@@ -179,7 +198,7 @@ toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("compile", gp.compile, pset=pset)
 
 
-toolbox.register("evaluate", evalkNN)
+toolbox.register("evaluate", fitness)
 #DoubleTournament to limit tree size, but different arguments
 toolbox.register("select", tools.selTournament, tournsize=7)
 toolbox.register("mate", gp.cxOnePoint)
@@ -223,7 +242,7 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     stats.register("max", numpy.max)
 
     
-    p,logbook=algorithms.eaSimple(pop, toolbox, cxpb, mutpb, ngen, stats, halloffame=hof,verbose=0)
+    p,logbook=algorithms.eaSimple(pop, toolbox, cxpb, mutpb, ngen, stats, halloffame=hof,verbose=1)
     
     
     #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
@@ -237,26 +256,27 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     while(logbook[i]['max']!=max_fit):
         i+=1
     list_results.append(logbook[i]['gen'])
+    #print(list_results)
    
     print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
     
     
     #Shows the individuals in the Hall of Fame
-    #for ind in hof:
-     #   print (ind)
+    for ind in hof:
+        print (ind)
     
-    return pop, hof, stats
+    return pop, stats, hof
 
 # =============================================================================
 
 if __name__ == "__main__":
     #param='mu'
     
-    NB_SIMU=10
+    NB_SIMU=1
     
     rand=69
     size=100
-    ngen = 500
+    ngen = 50
     cxpb = 0.8
     mutpb = 0.05
     pb_pace=0.05
@@ -269,14 +289,14 @@ if __name__ == "__main__":
         
         if param=="original":
             pop,stats,hof=main(rand,size,cxpb,mutpb,ngen,param)
-            list_hof.append(['original',hof[0][0]]+list(hof[0][2:]))
+            #list_hof.append(['original',hof[0][0]]+list(hof[0][2:]))
             
         if param=="rand":
             print ("Max_fit   Gen   Rand")
             for i in range (NB_SIMU):
                 rand=int(time.clock()*10)
                 pop,stats,hof=main(rand,size,cxpb,mutpb,ngen,param)
-                list_hof.append([rand,hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([rand,hof[0][0]]+list(hof[0]))
                 
             
         elif param=="size":
@@ -284,7 +304,7 @@ if __name__ == "__main__":
             size=20
             for i in range (NB_SIMU):      
                 pop,stats,hof=main(rand,size+i,cxpb,mutpb,ngen,param)
-                list_hof.append([size+i,hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([size+i,hof[0][0]]+list(hof[0]))
 
          
         elif param=="cross":
@@ -293,7 +313,7 @@ if __name__ == "__main__":
             cxpb=0
             for i in range (NB_SIMU):          
                 pop,stats,hof=main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param)
-                list_hof.append([round(cxpb+i*pb_pace,3),hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([round(cxpb+i*pb_pace,3),hof[0][0]]+list(hof[0]))
 
          
         elif param=="mutate":
@@ -302,7 +322,7 @@ if __name__ == "__main__":
             mutpb=0
             for i in range (NB_SIMU):  
                 pop,stats,hof=main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param)
-                list_hof.append([round(mutpb+i*pb_pace,3),hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([round(mutpb+i*pb_pace,3),hof[0][0]]+list(hof[0]))
 
 #        elif param=="optimal":
 #            NB_SIMU=50
