@@ -17,38 +17,39 @@ NB_NEIGHBORS=3
 
 
 
-"""Reads the data in the csv file for one user, transforms it to a dictionary containing the values for the action"""
+"""Reads the data in the csv file for one user, transforms it to a dictionary containing the values for ONE action"""
 def action(data):
     action={}
     action["type"]=data[0]
     action["date"]=datetime.strptime(data[1], '%m/%d/%Y %H:%M:%S')
-    action["pc"]=data[2]
+    #action["pc"]=data[2]              
+    #TODO number of pc as feature ?
     
     #all other attributes useless if using HMM ?
     if action["type"]=="l" or action["type"]=="h":
-        action["activity"]=data[3]#[:len(data[3])-1]
+        action["activity"]=data[3][:len(data[3])-1]
     #elif action["type"]=="h":
         #action["activity"]=data[3]#[:len(data[4])-1]
         #action["url"]=data[3]
     elif action["type"]=="d":
         action["activity"]=data[4][:len(data[4])-1]
-        action["file_tree"]=data[3]
+        #action["file_tree"]=data[3]
     elif action["type"]=="f":
         #print(data)
         action["activity"]=data[4]
         action["to_removable_media"]=data[5]
         action["from_removable_media"]=data[6]#[:len(data[6])-1]
-        action["filename"]=data[3]
+        #action["filename"]=data[3]
         #print(action["from_removable_media"])
     elif action["type"]=="e":
         action["activity"]=data[7]
-        action["size"]=data[8]
-        action["to"]=data[3]
-        action["cc"]=data[4]
-        action["bcc"]=data[5]
-        action["from"]=data[6]
-        if data[9]!='\n':
-            action["attachments"]=data[9][:len(data[9])-1]
+        #action["size"]=data[8]
+        #action["to"]=data[3]
+        #action["cc"]=data[4]
+        #action["bcc"]=data[5]
+        #action["from"]=data[6]
+        #if data[9]!='\n':
+        #    action["attachments"]=data[9][:len(data[9])-1]
         
     return action
 
@@ -61,7 +62,7 @@ def action(data):
     - if there's a removable media
     - the number of activities on the web
    """ 
-def days(list_actions):
+def daysVector(list_actions):
     days=[]
     beginning=list_actions[0]['date']
     feature_vect=[0]*6
@@ -87,6 +88,15 @@ def days(list_actions):
             days.append(feature_vect)
             feature_vect=[0]*6
             feature_vect[0]=act['date'].hour
+            
+            if act['type']=='l':
+                feature_vect[2]+=1
+            elif act['type']=='e' and act['activity']=='Send':
+                feature_vect[3]+=1
+            elif act['type']=='f' and (act["to_removable_media"]=='True' or act["from_removable_media"]=='True'):
+                feature_vect[4]=+1
+            elif act["type"]=="h":
+                feature_vect[5]+=1
     
     #Normalize the vector
     for i in range (len(days)):
@@ -105,7 +115,7 @@ for line in user_file:
 
 list_actions.sort(key=lambda r: r["date"])   #sort the sequences by date of action 
 
-session_date,sessions=days(list_actions)
+session_date,sessions=daysVector(list_actions)
 dico_session={}
 for i in range(len(sessions)):
     dico_session[session_date[i]]=sessions[i]
@@ -137,24 +147,6 @@ nbrs = NearestNeighbors(n_neighbors=NB_NEIGHBORS, algorithm='kd_tree').fit(X)   
 Fitness for GA. Evaluate if the feature vector is anomalous or not
 """
 def distance(individual):
-    #Supervised kNN
-#    y=np.zeros(len(X))
-#    y[0]=1
-#    iris = datasets.load_iris()
-#    X = iris.data[:, :2]
-#    y = iris.target
-#    
-#    n_neighbors = 15
-#
-#    for weights in ['uniform', 'distance']: 
-#        # we create an instance of Neighbours Classifier and fit the data.
-#        clf = neighbors.KNeighborsClassifier(n_neighbors, weights=weights)
-#        clf.fit(X, y)
-#    
-#        Z = clf.predict([X[0,:]])
-#        print(Z)
-        
-        
     #Unsupervised kNN
     distances, indices = nbrs.kneighbors([individual])
     return distances[0,2]  
@@ -204,6 +196,8 @@ if 'usr' in vars():
 
 
 if __name__ == "__main__":
-    print('begin,duration,logon,emails,media,web')
-    for i in range(50):
-        print(sessions[i])
+#    print('begin,duration,logon,emails,media,web')
+#    for i in range(50):
+#        print(sessions[i])
+    
+    print(distance([0,1,0.5,0.003,1,0.998,0.002,1]))

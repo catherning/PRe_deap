@@ -24,7 +24,7 @@ actions=["logon","email","http","device","file"]
 
 # =============================================================================
 
-#Date of the action
+"""Date of the action"""
 def actionDate():
     #year = 2010
     #month = random.randint(1, 12)
@@ -50,7 +50,7 @@ def action():
         action["activity"]=random.choice(["Send","View"])
     return action
 
-#Creates the feature vector
+"""Creates the feature vector"""
 def session():
     ind=[]
     for i in range(IND_INIT_SIZE):
@@ -134,6 +134,7 @@ toolbox.register("mate", tools.cxTwoPoint)
 toolbox.register("mutate", mute)
 toolbox.register("select", tools.selNSGA2)
 
+# =============================================================================
 
 def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     random.seed(rand)
@@ -159,10 +160,6 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
         list_results=[0]
     
     pop = toolbox.population(n=MU)
-#    print()
-#    for ind in pop:
-#        print (ind)
-    
     hof = tools.ParetoFront()
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean, axis=0)
@@ -191,17 +188,7 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     return pop, stats, hof
 
 def plot(list_hof,param):
-    plt.figure()
-#    ind = np.arange(5)
-#    width=0.05 
-#    fig, ax = plt.subplots()
-#    rects1 = ax.bar(ind, men_means, width, color='r')
-    
-#    df2 = pandas.DataFrame(list_hof, columns=name)
-#
-#    df2.plot(kind='bar');
-#    plt.title(param)
-    
+    plt.figure()    
     df = pandas.DataFrame(list_hof,
                           columns=["name","begin hour","logon","emails",'device','web'])
     parallel_coordinates(df,"name")

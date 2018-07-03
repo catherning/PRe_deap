@@ -4,14 +4,108 @@ from deap import creator
 from deap import tools
 from deap import gp
 
+import os
 import kNN
 import random
 import time
 import numpy
+from sklearn.neighbors import NearestNeighbors
 
 NB_ACTIONS=13
 random.seed(9)
+path='D:/r6.2/users/'
+list_users=os.listdir(path)
+attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
+actions=["l","e","h","d","f"]
 
+user=list_users[0]
+#usr=attackers[0]
+#user=usr+".csv" #first insider attacker
+user_file=open(path+user)
+NB_NEIGHBORS=3
+
+
+
+def daysSeq(list_actions):
+    days=[]
+    beginning=list_actions[0]['date']
+    sequence=[]
+    date=[]
+    
+    def activity(act):
+        if act['type']==actions[0]:
+            
+            if act['activity']=='Logon':
+                sequence.append(1)
+            else:
+                sequence.append(2)
+        elif act['type']==actions[2]:
+            
+            if act['activity']=='WWW Download':
+                sequence.append(5)
+            elif act['activity']=='WWW Upload':
+                sequence.append(6)
+            else:
+                sequence.append(7)
+        elif act['type']==actions[3]:
+            
+            if act['activity']=='Connect':
+                sequence.append(3)
+            else:
+                sequence.append(4)
+        elif act['type']==actions[4]:
+            
+            if act['activity']=='File Open':
+                sequence.append(10)
+            elif act['activity']=='File Write':
+                sequence.append(11)
+            elif act['activity']=='File Copy':
+                sequence.append(12)
+            else:
+                sequence.append(13)
+        elif act['type']==actions[1]:
+            if act['activity']=='Send':
+                sequence.append(8)
+            else:
+                sequence.append(9)
+        
+    for act in list_actions:
+        if beginning.date()==act['date'].date():
+            activity(act)
+
+        else:
+            date.append(beginning.date())
+            beginning=act['date']
+            days.append(sequence)
+            sequence=[]
+            activity(act)
+
+    return date,days
+
+#Takes the activity from the file of one user, combine it in one feature vector
+list_actions=[]
+for line in user_file:
+    data=line.split(',')
+    activity=kNN.action(data)
+    list_actions.append(activity)
+
+list_actions.sort(key=lambda r: r["date"])   #sort the sequences by date of action 
+
+
+session_date,sessions=daysSeq(list_actions)
+
+    
+dico_session={}
+for i in range(len(sessions)):
+    dico_session[session_date[i]]=sessions[i]
+
+
+#TODO Takes 90 first sessions (the date begins the 4th January, the earliest attack is in July)
+X=numpy.asarray(sessions)
+#print(X)
+
+#kNN Unsupervised
+nbrs = NearestNeighbors(n_neighbors=NB_NEIGHBORS, algorithm='kd_tree').fit(X)   #kd_tree fastest
 
 ### Functions set
 
@@ -44,11 +138,21 @@ def repeat(left):
 #def if_then_else(condition, out1, out2):
 #    out1() if condition() else out2()
     
+"""
+Fitness for GA. Evaluate if the feature vector is anomalous or not
+"""
+def distance(individual):
+    #Unsupervised kNN
+    distances, indices = nbrs.kneighbors([individual])
+    return distances[0,2]  
+    
 def evalkNN(individual):
     func = toolbox.compile(expr=individual)
     print(func)
 
-    return kNN.distance(func),
+    return distance(func),
+
+# =============================================================================
     
 pset = gp.PrimitiveSet("MAIN", 0)
 pset.addPrimitive(add, 2)
@@ -57,14 +161,12 @@ pset.addPrimitive(mul, 2)
 pset.addPrimitive(div, 2)
 pset.addPrimitive(concatenate, 2)
 pset.addPrimitive(repeat, 1)
-#pset.addPrimitive(math.cos, 1)
-#pset.addPrimitive(math.sin, 1)
 #pset.addEphemeralConstant("rand101", lambda: random.randint(0, 13))
 for i in range(1,14):
     pset.addTerminal([i])
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
+#creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+#creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
 
@@ -88,12 +190,7 @@ toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 #toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter('height'), max_value=50))
 #toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter('height'), max_value=50))
 
-#a=toolbox.individual()
-#b=toolbox.individual()
-#print(b)
-#print(toolbox.population(10))
-
-
+# =============================================================================
 
 def main(rand,size,cxpb,mutpb,ngen,param):
     random.seed(rand)
@@ -115,8 +212,8 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     
     pop = toolbox.population(n=size)
     
-    for ind in pop:
-        print(ind)
+#    for ind in pop:
+#        print(ind)
         
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -150,6 +247,7 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     
     return pop, hof, stats
 
+# =============================================================================
 
 if __name__ == "__main__":
     #param='mu'
@@ -171,14 +269,14 @@ if __name__ == "__main__":
         
         if param=="original":
             pop,stats,hof=main(rand,size,cxpb,mutpb,ngen,param)
-            list_hof.append(['original']+[hof[0][0]]+list(hof[0][2:]))
+            list_hof.append(['original',hof[0][0]]+list(hof[0][2:]))
             
         if param=="rand":
             print ("Max_fit   Gen   Rand")
             for i in range (NB_SIMU):
                 rand=int(time.clock()*10)
                 pop,stats,hof=main(rand,size,cxpb,mutpb,ngen,param)
-                list_hof.append([rand]+[hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([rand,hof[0][0]]+list(hof[0][2:]))
                 
             
         elif param=="size":
@@ -186,7 +284,7 @@ if __name__ == "__main__":
             size=20
             for i in range (NB_SIMU):      
                 pop,stats,hof=main(rand,size+i,cxpb,mutpb,ngen,param)
-                list_hof.append([mu+i]+[hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([size+i,hof[0][0]]+list(hof[0][2:]))
 
          
         elif param=="cross":
@@ -195,7 +293,7 @@ if __name__ == "__main__":
             cxpb=0
             for i in range (NB_SIMU):          
                 pop,stats,hof=main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param)
-                list_hof.append([round(cxpb+i*pb_pace,3)]+[hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([round(cxpb+i*pb_pace,3),hof[0][0]]+list(hof[0][2:]))
 
          
         elif param=="mutate":
@@ -204,7 +302,7 @@ if __name__ == "__main__":
             mutpb=0
             for i in range (NB_SIMU):  
                 pop,stats,hof=main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param)
-                list_hof.append([round(mutpb+i*pb_pace,3)]+[hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([round(mutpb+i*pb_pace,3),hof[0][0]]+list(hof[0][2:]))
 
 #        elif param=="optimal":
 #            NB_SIMU=50

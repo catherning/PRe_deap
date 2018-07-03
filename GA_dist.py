@@ -1,18 +1,17 @@
-import random
-import numpy
-import time
-
 from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
 from math import sqrt
 
-import csv
+import random
+import numpy
+import time
 
 # To assure reproductibility, the RNG seed is set prior to the items
 # dict initialization. It is also seeded in main().
 random.seed(65)
+import csv
 
 #List of users id
 list_user_id=[]
@@ -206,9 +205,9 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
 if __name__ == "__main__":
     NB_SIMU=10
 
-    ngen = 10
-    mu = 10
-    lamb = 50
+    ngen = 30
+    mu = 70
+    lamb = 100
     cxpb = 0.7
     mutpb = 0.2
     pb_pace=0.02
