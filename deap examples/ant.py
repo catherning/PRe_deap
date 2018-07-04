@@ -148,7 +148,7 @@ def mainRand():
     with  open("C:/Users/cx10/deap-master/examples/gp/ant/santafe_trail.txt") as trail_file:
       ant.parse_matrix(trail_file)
     
-    pop = toolbox.population(n=300)
+    pop = toolbox.population(n=100)
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
@@ -228,7 +228,7 @@ def mainProba(proba,operation):
     with  open("C:/Users/cx10/deap-master/examples/gp/ant/santafe_trail.txt") as trail_file:
       ant.parse_matrix(trail_file)
     
-    pop = toolbox.population(n=300)
+    pop = toolbox.population(n=100)
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
@@ -270,7 +270,7 @@ def mainGen(gen):
     with  open("C:/Users/cx10/deap-master/examples/gp/ant/santafe_trail.txt") as trail_file:
       ant.parse_matrix(trail_file)
     
-    pop = toolbox.population(n=300)
+    pop = toolbox.population(n=100)
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
@@ -342,8 +342,8 @@ def mainOpt():
 
 
 if __name__ == "__main__":
-    NB_SIMU=50
-    param="opt"
+    NB_SIMU=10
+    param="rand"
     
     if param=="rand":
         print ("Rand   Max_fit  Gen")

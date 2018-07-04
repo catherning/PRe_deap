@@ -10,18 +10,18 @@ import kNN
 import random
 import time
 import numpy
-from sklearn.neighbors import NearestNeighbors
 from math import sqrt
+import operator
+import matplotlib.pyplot as plt
 
 MAX_ACTIONS=150
 NB_ACTIONS=13
-random.seed(9)
 path='D:/r6.2/users/'
 list_users=os.listdir(path)
 attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 actions=["l","e","h","d","f"]
 
-user=list_users[0]
+user=list_users[142]
 #usr=attackers[0]
 #user=usr+".csv" #first insider attacker
 user_file=open(path+user)
@@ -104,20 +104,20 @@ for i in range(len(sessions)):
 ### Functions set
 
 def add(left,right):
-    left[0]=(left[0]+right[0])%NB_ACTIONS+1 #+1 bc there's no action numbered 0, but it's by convention
+    left[len(left)-1]=(left[len(left)-1]+right[0])%NB_ACTIONS+1 #+1 bc there's no action numbered 0, but it's by convention
     return left
 
 def sub(left,right):
-    left[0]=(left[0]-right[0])%NB_ACTIONS+1
+    left[len(left)-1]=(left[len(left)-1]-right[0])%NB_ACTIONS+1
     return left
 
 def mul(left,right):
-    left[0]=(left[0]*right[0])%NB_ACTIONS+1
+    left[len(left)-1]=(left[len(left)-1]*right[0])%NB_ACTIONS+1
     return left
 
 def div(left, right):
     try:
-     left[0]= left[0] // right[0]
+     left[len(left)-1]= left[len(left)-1] // right[0]
      return left
     except ZeroDivisionError:
         left[0]=1
@@ -149,26 +149,23 @@ def distance(seq):
         dot=sum(i[0] * i[1] for i in zip(a, b))
         normA=sqrt(sum(i**2 for i in a))
         normB=sqrt(sum(i**2 for i in b))
-        return 1-(dot/(normA*normB))
+        return (dot/(normA*normB))
     
-#    if len(seq)>MAX_ACTIONS:
-#        return 0
-#    elif len(seq)<=1:
-#        return 0
-    
+    if len(seq)>MAX_ACTIONS or len(seq)<=3:
+        return 0
+
     #fit=distanceLevenshtein(attackAnswer,len(attackAnswer),ind,len(ind))
     #coef=Jaccard(attackAnswer,ind)
-    maxi=0
+    mini=10
     for i in range(30):
-        if maxi<Cosine(sessions[i],seq):
-            maxi=Cosine(sessions[i],seq)
+        if mini>Cosine(sessions[i],seq):
+            mini=Cosine(sessions[i],seq)
     #print(maxi)
-    return maxi
+    return mini
 
 def fitness(individual):
     seq = toolbox.compile(expr=individual)
     dist=distance(seq)
-    
     return dist,
 
 # =============================================================================
@@ -206,8 +203,8 @@ toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 #For controlling bloat
-#toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter('height'), max_value=50))
-#toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter('height'), max_value=50))
+toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter('height'), max_value=50))
+toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter('height'), max_value=50))
 
 # =============================================================================
 
@@ -242,7 +239,7 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     stats.register("max", numpy.max)
 
     
-    p,logbook=algorithms.eaSimple(pop, toolbox, cxpb, mutpb, ngen, stats, halloffame=hof,verbose=1)
+    p,logbook=algorithms.eaSimple(pop, toolbox, cxpb, mutpb, ngen, stats, halloffame=hof,verbose=0)
     
     
     #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
@@ -258,21 +255,34 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     list_results.append(logbook[i]['gen'])
     #print(list_results)
    
-    print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
+    print ("{0}     {1}    {2}".format(round(list_results[0],3),round(list_results[1],3),list_results[2]))
     
     
     #Shows the individuals in the Hall of Fame
-    for ind in hof:
-        print (ind)
+#    for ind in hof:
+##        print (ind)
+#        print(toolbox.compile(expr=ind))
     
-    return pop, stats, hof
+    #return pop, stats, hof
+    return hof
+
+
+def plot(list_hof,param):
+    plt.figure()    
+    for ind in list_hof:
+        #print(ind[1])
+        seq=toolbox.compile(expr=ind[1])
+        #print(seq)
+        plt.plot(seq)
+    plt.title(param)
+    plt.show()
 
 # =============================================================================
 
 if __name__ == "__main__":
     #param='mu'
     
-    NB_SIMU=1
+    NB_SIMU=10
     
     rand=69
     size=100
@@ -288,41 +298,41 @@ if __name__ == "__main__":
         list_hof=[]
         
         if param=="original":
-            pop,stats,hof=main(rand,size,cxpb,mutpb,ngen,param)
-            #list_hof.append(['original',hof[0][0]]+list(hof[0][2:]))
+            hof=main(rand,size,cxpb,mutpb,ngen,param)
+            list_hof.append(['original',hof[0]])
             
         if param=="rand":
-            print ("Max_fit   Gen   Rand")
+            print ("Rand   Max_fit   Gen")
             for i in range (NB_SIMU):
                 rand=int(time.clock()*10)
-                pop,stats,hof=main(rand,size,cxpb,mutpb,ngen,param)
-                list_hof.append([rand,hof[0][0]]+list(hof[0]))
+                hof=main(rand,size,cxpb,mutpb,ngen,param)
+                list_hof.append([rand,hof[0]])
                 
             
         elif param=="size":
-            print ("Max_fit   Gen   Size")
+            print ("Size   Max_fit   Gen")
             size=20
             for i in range (NB_SIMU):      
-                pop,stats,hof=main(rand,size+i,cxpb,mutpb,ngen,param)
-                list_hof.append([size+i,hof[0][0]]+list(hof[0]))
+                hof=main(rand,size+i,cxpb,mutpb,ngen,param)
+                list_hof.append([size+i,hof[0]])
 
          
         elif param=="cross":
-            print ("Max_fit   Gen   CrossProba")
+            print ("CrossProba   Max_fit   Gen")
             NB_SIMU=int((1-mutpb)/pb_pace)
             cxpb=0
             for i in range (NB_SIMU):          
-                pop,stats,hof=main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param)
-                list_hof.append([round(cxpb+i*pb_pace,3),hof[0][0]]+list(hof[0]))
+                hof=main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param)
+                list_hof.append([round(cxpb+i*pb_pace,3),hof[0]])
 
          
         elif param=="mutate":
             NB_SIMU=int((1-cxpb)/pb_pace)
-            print ("Max_fit   Gen   MutPb")
+            print ("MutPb   Max_fit   Gen")
             mutpb=0
             for i in range (NB_SIMU):  
-                pop,stats,hof=main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param)
-                list_hof.append([round(mutpb+i*pb_pace,3),hof[0][0]]+list(hof[0]))
+                hof=main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param)
+                list_hof.append([round(mutpb+i*pb_pace,3),hof[0]])
 
 #        elif param=="optimal":
 #            NB_SIMU=50
@@ -335,4 +345,4 @@ if __name__ == "__main__":
 #                rand=int(time.clock()*10)
 #                pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
         
-        #plot(list_hof,param)
+        plot(list_hof,param)
