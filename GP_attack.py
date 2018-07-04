@@ -13,6 +13,7 @@ import numpy
 from math import sqrt
 import operator
 import matplotlib.pyplot as plt
+import pandas as pd
 
 MAX_ACTIONS=150
 NB_ACTIONS=13
@@ -21,12 +22,11 @@ list_users=os.listdir(path)
 attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 actions=["l","e","h","d","f"]
 
-user=list_users[142]
+user=list_users[12]
 #usr=attackers[0]
 #user=usr+".csv" #first insider attacker
 user_file=open(path+user)
 NB_NEIGHBORS=3
-
 
 
 def daysSeq(list_actions):
@@ -120,7 +120,7 @@ def div(left, right):
      left[len(left)-1]= left[len(left)-1] // right[0]
      return left
     except ZeroDivisionError:
-        left[0]=1
+        left[len(left)-1]=1
         return left
 
 def concatenate(left,right):
@@ -228,8 +228,8 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     
     pop = toolbox.population(n=size)
     
-#    for ind in pop:
-#        print(ind)
+    for ind in pop:
+        print(ind)
         
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -268,14 +268,15 @@ def main(rand,size,cxpb,mutpb,ngen,param):
 
 
 def plot(list_hof,param):
-    plt.figure()    
-    for ind in list_hof:
-        #print(ind[1])
-        seq=toolbox.compile(expr=ind[1])
-        #print(seq)
-        plt.plot(seq)
+    df = pd.DataFrame(list_hof[0])
+    if param!='original':
+        for i in range(len(list_hof)):
+            additional=pd.DataFrame(list_hof[i])
+            df = pd.concat([df, additional], axis=1)
+    plt.figure()
+    df.plot()
     plt.title(param)
-    plt.show()
+
 
 # =============================================================================
 
@@ -298,41 +299,49 @@ if __name__ == "__main__":
         list_hof=[]
         
         if param=="original":
+            dico_hof={}
             hof=main(rand,size,cxpb,mutpb,ngen,param)
-            list_hof.append(['original',hof[0]])
+            dico_hof['original']=toolbox.compile(expr=hof[0]) 
+            list_hof=[dico_hof]
             
         if param=="rand":
             print ("Rand   Max_fit   Gen")
             for i in range (NB_SIMU):
+                dico_hof={}
                 rand=int(time.clock()*10)
                 hof=main(rand,size,cxpb,mutpb,ngen,param)
-                list_hof.append([rand,hof[0]])
-                
+                dico_hof[rand]=toolbox.compile(expr=hof[0]) 
+                list_hof.append(dico_hof)
             
         elif param=="size":
             print ("Size   Max_fit   Gen")
             size=20
-            for i in range (NB_SIMU):      
+            for i in range (NB_SIMU):  
+                dico_hof={}
                 hof=main(rand,size+i,cxpb,mutpb,ngen,param)
-                list_hof.append([size+i,hof[0]])
+                dico_hof[size+i]=toolbox.compile(expr=hof[0]) 
+                list_hof.append(dico_hof)
 
          
         elif param=="cross":
             print ("CrossProba   Max_fit   Gen")
             NB_SIMU=int((1-mutpb)/pb_pace)
             cxpb=0
-            for i in range (NB_SIMU):          
+            for i in range (NB_SIMU):   
+                dico_hof={}
                 hof=main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param)
-                list_hof.append([round(cxpb+i*pb_pace,3),hof[0]])
-
+                dico_hof[round(cxpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
+                list_hof.append(dico_hof)
          
         elif param=="mutate":
             NB_SIMU=int((1-cxpb)/pb_pace)
             print ("MutPb   Max_fit   Gen")
             mutpb=0
             for i in range (NB_SIMU):  
+                dico_hof={}
                 hof=main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param)
-                list_hof.append([round(mutpb+i*pb_pace,3),hof[0]])
+                dico_hof[round(mutpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
+                list_hof.append(dico_hof)
 
 #        elif param=="optimal":
 #            NB_SIMU=50
