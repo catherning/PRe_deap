@@ -15,7 +15,8 @@ import operator
 import matplotlib.pyplot as plt
 import pandas as pd
 
-MAX_ACTIONS=150
+MAX_ACTIONS=100
+MIN_ACTIONS=10
 NB_ACTIONS=13
 path='D:/r6.2/users/'
 list_users=os.listdir(path)
@@ -23,8 +24,8 @@ attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 actions=["l","e","h","d","f"]
 
 user=list_users[12]
-#usr=attackers[0]
-#user=usr+".csv" #first insider attacker
+usr=attackers[0]
+user=usr+".csv" #first insider attacker
 user_file=open(path+user)
 NB_NEIGHBORS=3
 
@@ -149,9 +150,9 @@ def distance(seq):
         dot=sum(i[0] * i[1] for i in zip(a, b))
         normA=sqrt(sum(i**2 for i in a))
         normB=sqrt(sum(i**2 for i in b))
-        return (dot/(normA*normB))
+        return 1-(dot/(normA*normB))
     
-    if len(seq)>MAX_ACTIONS or len(seq)<=3:
+    if len(seq)>MAX_ACTIONS or len(seq)<=MIN_ACTIONS:
         return 0
 
     #fit=distanceLevenshtein(attackAnswer,len(attackAnswer),ind,len(ind))
@@ -160,7 +161,9 @@ def distance(seq):
     for i in range(30):
         if mini>Cosine(sessions[i],seq):
             mini=Cosine(sessions[i],seq)
-    #print(maxi)
+    #print(mini)
+#    if mini==1:
+#        print(seq)
     return mini
 
 def fitness(individual):
@@ -228,8 +231,6 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     
     pop = toolbox.population(n=size)
     
-    for ind in pop:
-        print(ind)
         
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -254,14 +255,29 @@ def main(rand,size,cxpb,mutpb,ngen,param):
         i+=1
     list_results.append(logbook[i]['gen'])
     #print(list_results)
-   
+    
+    
+    #Shows the minimum fitness  after all the generations and the first generation where this max_fit was achieved
+#    list_min=[]
+#    for elt in logbook:
+#        list_min.append(elt['min'])
+#    min_fit=min(list_min)
+#    list_results.append(min_fit)
+#
+#    i=0
+#    while(logbook[i]['min']!=min_fit):
+#        i+=1
+#    list_results.append(logbook[i]['gen'])
+#    #print(list_results)
+#   
+
     print ("{0}     {1}    {2}".format(round(list_results[0],3),round(list_results[1],3),list_results[2]))
     
     
     #Shows the individuals in the Hall of Fame
-#    for ind in hof:
-##        print (ind)
-#        print(toolbox.compile(expr=ind))
+    for ind in hof:
+#        print (ind)
+        print(toolbox.compile(expr=ind))
     
     #return pop, stats, hof
     return hof
@@ -277,7 +293,18 @@ def plot(list_hof,param):
     df.plot()
     plt.title(param)
 
-
+def plotData(number):
+    df = pd.DataFrame(sessions[0])
+    
+    for i in range(number):
+        additional=pd.DataFrame(sessions[i])
+        df = pd.concat([df, additional], axis=1)
+        #dico_session[session_date[i]]=sessions[i]
+    plt.figure()
+    df.plot()
+    plt.title('Dataset')
+    
+    
 # =============================================================================
 
 if __name__ == "__main__":
@@ -286,6 +313,7 @@ if __name__ == "__main__":
     NB_SIMU=10
     
     rand=69
+    
     size=100
     ngen = 50
     cxpb = 0.8
@@ -293,6 +321,7 @@ if __name__ == "__main__":
     pb_pace=0.05
     param_list=["original","rand",'size',"cross","mutate"] #"optimal"
     
+    plotData(30)
     
     for param in param_list:
         print("\n")
@@ -315,8 +344,9 @@ if __name__ == "__main__":
             
         elif param=="size":
             print ("Size   Max_fit   Gen")
-            size=20
+            size=80
             for i in range (NB_SIMU):  
+                rand=int(time.clock()*10)
                 dico_hof={}
                 hof=main(rand,size+i,cxpb,mutpb,ngen,param)
                 dico_hof[size+i]=toolbox.compile(expr=hof[0]) 
@@ -328,6 +358,7 @@ if __name__ == "__main__":
             NB_SIMU=int((1-mutpb)/pb_pace)
             cxpb=0
             for i in range (NB_SIMU):   
+                rand=int(time.clock()*10)
                 dico_hof={}
                 hof=main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param)
                 dico_hof[round(cxpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
@@ -338,6 +369,7 @@ if __name__ == "__main__":
             print ("MutPb   Max_fit   Gen")
             mutpb=0
             for i in range (NB_SIMU):  
+                rand=int(time.clock()*10)
                 dico_hof={}
                 hof=main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param)
                 dico_hof[round(mutpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
