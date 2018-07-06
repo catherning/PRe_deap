@@ -7,6 +7,7 @@ from math import sqrt
 import random
 import numpy
 import time
+from datetime import date,datetime
 
 # To assure reproductibility, the RNG seed is set prior to the items
 # dict initialization. It is also seeded in main().
@@ -40,11 +41,11 @@ actions=["logon","email","http","device","file"]
 #13 delete
 def scenario(number):
     file=open('D:/answers/r6.2-'+str(number)+'.csv')
+    days=[]
     sequence=[]
-    for line in file:
-        data=line.split(',')
-        action=data[0]
-        #print(action)
+    date=[]
+    
+    def activity(action):
         if action==actions[0]:
             if data[5][1:len(data[5])-2]=='Logon':
                 sequence.append(1)
@@ -80,13 +81,37 @@ def scenario(number):
                 sequence.append(8)
             else:
                 sequence.append(9)
-    return sequence
+    first_line = file.readline()
+    data=first_line.split(',')
+    action=data[0]
+    beginning=datetime.strptime(data[2][1:len(data[2])-1], '%m/%d/%Y %H:%M:%S').date()
+    activity(action)
+    
+    #TODO sort by date the data before. So needs to register the data into dict instead of processing line by line
+    for line in file:
+        data=line.split(',')
+        print(data)
+        action=data[0]
+        
+        if beginning==datetime.strptime(data[2][1:len(data[2])-1], '%m/%d/%Y %H:%M:%S').date():
+            activity(action)
+        
+        else:
+            date.append(beginning)
+            print(beginning)
+            beginning=datetime.strptime(data[2][1:len(data[2])-1], '%m/%d/%Y %H:%M:%S').date()
+            days.append(sequence)
+            sequence=[]
+            activity(action)
+
+    return date,days
 
 #scenarioNB=int(input('Choose the scenario number to train for (1-5): '))
 scenarioNB=1
-attackAnswer=scenario(scenarioNB)
+date,attackAnswer=scenario(scenarioNB)
 print('The scenario '+str(scenarioNB)+' is the sequence:')
-print (attackAnswer)
+for session in attackAnswer:
+    print(session)
 IND_INIT_SIZE = len(attackAnswer)-2
 MAX_ACTIONS = len(attackAnswer)+5
 
@@ -131,8 +156,12 @@ def fitness(ind):
     
     #fit=distanceLevenshtein(attackAnswer,len(attackAnswer),ind,len(ind))
     #coef=Jaccard(attackAnswer,ind)
-    coef=Cosine(attackAnswer,ind)
-    fit=1-coef
+    mini=1000
+    for attack in attackAnswer:
+        coef=Cosine(attack,ind)
+        if mini>coef:
+            mini=coef
+    fit=1-mini
     return fit,
 
 def mutList(individual):
