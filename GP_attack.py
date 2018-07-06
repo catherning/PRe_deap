@@ -14,9 +14,10 @@ from math import sqrt
 import operator
 import matplotlib.pyplot as plt
 import pandas as pd
+import GA_dist
 
 MAX_ACTIONS=100
-MIN_ACTIONS=10
+MIN_ACTIONS=6
 NB_ACTIONS=13
 path='D:/r6.2/users/'
 list_users=os.listdir(path)
@@ -138,37 +139,87 @@ def repeat(left):
 """
 Fitness for GA. Evaluate if the feature vector is anomalous or not
 """    
-def distance(seq):
-    def Cosine(dataseq,seq):
-        a=[0]*14
-        b=[0]*14
-        for elt in dataseq:
-            a[elt]+=1
-        for elt in seq:
-            #print(elt)
-            b[elt]+=1
-        dot=sum(i[0] * i[1] for i in zip(a, b))
-        normA=sqrt(sum(i**2 for i in a))
-        normB=sqrt(sum(i**2 for i in b))
-        return 1-(dot/(normA*normB))
-    
-    if len(seq)>MAX_ACTIONS or len(seq)<=MIN_ACTIONS:
-        return 0
+def Cosine(dataseq,seq):
+    a=[0]*14
+    b=[0]*14
+    for elt in dataseq:
+        a[elt]+=1
+    for elt in seq:
+        b[elt]+=1
+    dot=sum(i[0] * i[1] for i in zip(a, b))
+    normA=sqrt(sum(i**2 for i in a))
+    normB=sqrt(sum(i**2 for i in b))
+    return 1-(dot/(normA*normB))
 
-    #fit=distanceLevenshtein(attackAnswer,len(attackAnswer),ind,len(ind))
-    #coef=Jaccard(attackAnswer,ind)
-    mini=10
+def Levenshtein(answer,i,ind,j):
+    if min(i,j)==0:
+        return(max(i,j))
+    else:
+        a=Levenshtein(answer,i-1,ind,j)+1
+        b=Levenshtein(answer,i,ind,j-1)+1
+        c=Levenshtein(answer,i-1,ind,j-1)+1*(answer[i-1]!=ind[j-1])
+        return min(a,b,c)
+    
+# Returns the minimum number of insertions, deletions, substitutions,
+# and transpositions needed to transform one string into another.
+#
+# @author Michael Homer
+# http://mwh.geek.nz/2009/04/26/python-damerau-levenshtein-distance/
+# https://genepidgin.readthedocs.io/en/latest/compare.html
+def damerauLevenshteinHomerDistance(seq1, seq2):
+    """
+    Calculate the Damerau-Levenshtein distance between sequences.
+
+    This distance is the number of additions, deletions, substitutions,
+    and transpositions needed to transform the first sequence into the
+    second. Although generally used with strings, any sequences of
+    comparable objects will work.
+
+    Transpositions are exchanges of *consecutive* characters; all other
+    operations are self-explanatory.
+
+    This implementation is O(N*M) time and O(M) space, for N and M the
+    lengths of the two sequences.
+    """
+    # codesnippet:D0DE4716-B6E6-4161-9219-2903BF8F547F
+    # Conceptually, this is based on a len(seq1) + 1 * len(seq2) + 1 matrix.
+    # However, only the current and two previous rows are needed at once,
+    # so we only store those.
+    oneago = None
+    thisrow = list(range(1, len(seq2) + 1)) + [0]
+    for x in range(len(seq1)):
+        # Python lists wrap around for negative indices, so put the
+        # leftmost column at the *end* of the list. This matches with
+        # the zero-indexed strings and saves extra calculation.
+        twoago, oneago, thisrow = oneago, thisrow, [0] * len(seq2) + [x + 1]
+        for y in range(len(seq2)):
+            delcost = oneago[y] + 1
+            addcost = thisrow[y - 1] + 1
+            subcost = oneago[y - 1] + (seq1[x] != seq2[y])
+            thisrow[y] = min(delcost, addcost, subcost)
+            # This block deals with transpositions
+            if (x > 0 and y > 0 and seq1[x] == seq2[y-1]
+              and seq1[x-1] == seq2[y] and seq1[x] != seq2[y]):
+                thisrow[y] = min(thisrow[y], twoago[y-2] + 1)
+    return thisrow[len(seq2) - 1]
+
+def distance(seq):
+    if len(seq)>MAX_ACTIONS or len(seq)<=MIN_ACTIONS:
+        return -1000
+    
+    mini=1000
     for i in range(30):
-        if mini>Cosine(sessions[i],seq):
-            mini=Cosine(sessions[i],seq)
-    #print(mini)
-#    if mini==1:
-#        print(seq)
+#        if mini>Cosine(sessions[i],seq):
+#            mini=Cosine(sessions[i],seq)
+        new=damerauLevenshteinHomerDistance(sessions[i],seq)
+        if mini>new:
+            mini=new
     return mini
 
 def fitness(individual):
     seq = toolbox.compile(expr=individual)
     dist=distance(seq)
+    #print(dist)
     return dist,
 
 # =============================================================================
@@ -190,7 +241,7 @@ creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 toolbox = base.Toolbox()
 
 # Attribute generator
-toolbox.register("expr_init", gp.genFull, pset=pset, min_=1, max_=2)
+toolbox.register("expr_init", gp.genFull, pset=pset, min_=4, max_=6)
 
 # Structure initializers
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
@@ -206,8 +257,8 @@ toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 #For controlling bloat
-toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter('height'), max_value=50))
-toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter('height'), max_value=50))
+toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter('height'), max_value=40))
+toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter('height'), max_value=40))
 
 # =============================================================================
 
@@ -228,10 +279,7 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     elif param=="original":
         list_results=[0]
     
-    
     pop = toolbox.population(n=size)
-    
-        
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
@@ -239,7 +287,6 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     stats.register("min", numpy.min)
     stats.register("max", numpy.max)
 
-    
     p,logbook=algorithms.eaSimple(pop, toolbox, cxpb, mutpb, ngen, stats, halloffame=hof,verbose=0)
     
     
@@ -269,15 +316,22 @@ def main(rand,size,cxpb,mutpb,ngen,param):
 #        i+=1
 #    list_results.append(logbook[i]['gen'])
 #    #print(list_results)
-#   
 
     print ("{0}     {1}    {2}".format(round(list_results[0],3),round(list_results[1],3),list_results[2]))
     
+#    if list_results[1]==-1000:
+#        print("BUG ????????????????????????????????????????????")
+##        for ind in pop:
+##            print(ind)
+##            print(toolbox.compile(expr=ind))
+#        for ind in hof:
+#            #print (ind)
+#            print(toolbox.compile(expr=ind))
     
     #Shows the individuals in the Hall of Fame
-    for ind in hof:
-#        print (ind)
-        print(toolbox.compile(expr=ind))
+#    for ind in hof:
+##        print (ind)
+#        print(toolbox.compile(expr=ind))
     
     #return pop, stats, hof
     return hof
@@ -299,7 +353,6 @@ def plotData(number):
     for i in range(number):
         additional=pd.DataFrame(sessions[i])
         df = pd.concat([df, additional], axis=1)
-        #dico_session[session_date[i]]=sessions[i]
     plt.figure()
     df.plot()
     plt.title('Dataset')
@@ -308,13 +361,11 @@ def plotData(number):
 # =============================================================================
 
 if __name__ == "__main__":
-    #param='mu'
-    
+
     NB_SIMU=10
     
     rand=69
-    
-    size=100
+    size=90
     ngen = 50
     cxpb = 0.8
     mutpb = 0.05
@@ -341,7 +392,12 @@ if __name__ == "__main__":
                 hof=main(rand,size,cxpb,mutpb,ngen,param)
                 dico_hof[rand]=toolbox.compile(expr=hof[0]) 
                 list_hof.append(dico_hof)
-            
+                
+                dist=Cosine(GA_dist.attackAnswer,toolbox.compile(expr=hof[0]))
+                if dist<0.4:
+                    print(dist)
+                    print(toolbox.compile(expr=hof[0]))
+           
         elif param=="size":
             print ("Size   Max_fit   Gen")
             size=80
@@ -351,8 +407,13 @@ if __name__ == "__main__":
                 hof=main(rand,size+i,cxpb,mutpb,ngen,param)
                 dico_hof[size+i]=toolbox.compile(expr=hof[0]) 
                 list_hof.append(dico_hof)
+                
+                dist=Cosine(GA_dist.attackAnswer,toolbox.compile(expr=hof[0]))
+                if dist<0.4:
+                    print(dist)
+                    print(toolbox.compile(expr=hof[0]))
 
-         
+     
         elif param=="cross":
             print ("CrossProba   Max_fit   Gen")
             NB_SIMU=int((1-mutpb)/pb_pace)
@@ -363,7 +424,12 @@ if __name__ == "__main__":
                 hof=main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param)
                 dico_hof[round(cxpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
                 list_hof.append(dico_hof)
-         
+                
+                dist=Cosine(GA_dist.attackAnswer,toolbox.compile(expr=hof[0]))
+                if dist<0.4:
+                    print(dist)
+                    print(toolbox.compile(expr=hof[0]))
+      
         elif param=="mutate":
             NB_SIMU=int((1-cxpb)/pb_pace)
             print ("MutPb   Max_fit   Gen")
@@ -374,6 +440,11 @@ if __name__ == "__main__":
                 hof=main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param)
                 dico_hof[round(mutpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
                 list_hof.append(dico_hof)
+                
+                dist=Cosine(GA_dist.attackAnswer,toolbox.compile(expr=hof[0]))
+                if dist<0.4:
+                    print(dist)
+                    print(toolbox.compile(expr=hof[0]))
 
 #        elif param=="optimal":
 #            NB_SIMU=50

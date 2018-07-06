@@ -82,7 +82,8 @@ def scenario(number):
                 sequence.append(9)
     return sequence
 
-scenarioNB=int(input('Choose the scenario number to train for (1-5): '))
+#scenarioNB=int(input('Choose the scenario number to train for (1-5): '))
+scenarioNB=1
 attackAnswer=scenario(scenarioNB)
 print('The scenario '+str(scenarioNB)+' is the sequence:')
 print (attackAnswer)
@@ -146,25 +147,7 @@ def mutList(individual):
 
 # =============================================================================
 
-creator.create("Fitness", base.Fitness, weights=(-1.0,))
-creator.create("Individual", list, fitness=creator.Fitness)
 
-toolbox = base.Toolbox()
-
-# Attribute generator
-toolbox.register("attr_action", random.randint,1,13)
-
-# Structure initializers
-toolbox.register("individual", tools.initRepeat, creator.Individual,
-    toolbox.attr_action, IND_INIT_SIZE)
-toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-toolbox.register("evaluate", fitness)
-toolbox.register("mate", tools.cxTwoPoint)
-toolbox.register("mutate", mutList)
-toolbox.register("select", tools.selNSGA2)
-
-# =============================================================================
 
 def main(rand,mu,lamb,cxpb,mutpb,ngen):
     random.seed(rand)
@@ -201,8 +184,30 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     print ("{0}     {1}    {2}   {3}".format(list_results[0],list_results[1],list_results[2],hof[0]))
     
     return pop, stats, hof
-    
+
+
 if __name__ == "__main__":
+# =============================================================================
+
+    creator.create("Fitness", base.Fitness, weights=(-1.0,))
+    creator.create("Individual", list, fitness=creator.Fitness)
+    
+    toolbox = base.Toolbox()
+    
+    # Attribute generator
+    toolbox.register("attr_action", random.randint,1,13)
+    
+    # Structure initializers
+    toolbox.register("individual", tools.initRepeat, creator.Individual,
+        toolbox.attr_action, IND_INIT_SIZE)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+    
+    toolbox.register("evaluate", fitness)
+    toolbox.register("mate", tools.cxTwoPoint)
+    toolbox.register("mutate", mutList)
+    toolbox.register("select", tools.selNSGA2)
+
+  
     NB_SIMU=10
 
     ngen = 30
