@@ -119,7 +119,7 @@ def mul(left,right):
 
 def div(left, right):
     try:
-     left[len(left)-1]= left[len(left)-1] // right[0]
+     left[len(left)-1]= (left[len(left)-1] // right[0])%NB_ACTIONS +1
      return left
     except ZeroDivisionError:
         left[len(left)-1]=1
@@ -131,11 +131,13 @@ def concatenate(left,right):
 def repeat(left):
     return left+left
 
+    
+def if_then_else(left,right,out1,out2):
+    if left[-1]<right[0]:
+        return left+out1
+    else:
+        return left+out2
 
-#def if_then_else(condition, out1, out2):
-#    out1() if condition() else out2()
-    
-    
 """
 Fitness for GA. Evaluate if the feature vector is anomalous or not
 """    
@@ -150,15 +152,6 @@ def Cosine(dataseq,seq):
     normA=sqrt(sum(i**2 for i in a))
     normB=sqrt(sum(i**2 for i in b))
     return 1-(dot/(normA*normB))
-
-def Levenshtein(answer,i,ind,j):
-    if min(i,j)==0:
-        return(max(i,j))
-    else:
-        a=Levenshtein(answer,i-1,ind,j)+1
-        b=Levenshtein(answer,i,ind,j-1)+1
-        c=Levenshtein(answer,i-1,ind,j-1)+1*(answer[i-1]!=ind[j-1])
-        return min(a,b,c)
     
 # Returns the minimum number of insertions, deletions, substitutions,
 # and transpositions needed to transform one string into another.
@@ -212,6 +205,7 @@ def distance(seq):
 #        if mini>Cosine(sessions[i],seq):
 #            mini=Cosine(sessions[i],seq)
         new=damerauLevenshteinHomerDistance(sessions[i],seq)
+        #new=Cosine(sessions[i],seq)
         if mini>new:
             mini=new
     return mini
@@ -231,6 +225,7 @@ pset.addPrimitive(mul, 2)
 pset.addPrimitive(div, 2)
 pset.addPrimitive(concatenate, 2)
 pset.addPrimitive(repeat, 1)
+pset.addPrimitive(if_then_else, 4)
 #pset.addEphemeralConstant("rand101", lambda: random.randint(0, 13))
 for i in range(1,14):
     pset.addTerminal([i])
@@ -280,11 +275,11 @@ def main(rand,size,cxpb,mutpb,ngen,param):
         list_results=[0]
     
     pop = toolbox.population(n=size)
-    hof = tools.HallOfFame(1)
+    hof = tools.HallOfFame(5)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
-    stats.register("std", numpy.std)
-    stats.register("min", numpy.min)
+#    stats.register("std", numpy.std)
+#    stats.register("min", numpy.min)
     stats.register("max", numpy.max)
 
     p,logbook=algorithms.eaSimple(pop, toolbox, cxpb, mutpb, ngen, stats, halloffame=hof,verbose=0)
@@ -302,8 +297,21 @@ def main(rand,size,cxpb,mutpb,ngen,param):
         i+=1
     list_results.append(logbook[i]['gen'])
     
-    print ("{0}     {1}    {2}".format(round(list_results[0],3),round(list_results[1],3),list_results[2]))
-    
+    #Calculates the shortest distance to the real attacks
+    mini=10
+    close_seq=[]
+    for ind in hof:
+        for seq in GA_dist.attackAnswer:
+            dist=Cosine(seq,toolbox.compile(expr=ind))
+            if mini>dist:
+                mini=dist
+                close_seq=seq
+    if mini<0.4:
+#        print(mini)
+#        print(toolbox.compile(expr=hof[0]))   
+        print ("{0}   {1}   {2}   {3}   {4}   {5}".format(round(list_results[0],3),round(list_results[1],3),list_results[2],mini,toolbox.compile(expr=hof[0]),close_seq))
+    else:
+        print ("{0}   {1}   {2}".format(round(list_results[0],3),round(list_results[1],3),list_results[2]))
 
     return hof
 
@@ -325,7 +333,7 @@ def plotData(number):
         additional=pd.DataFrame(sessions[i])
         df = pd.concat([df, additional], axis=1)
     plt.figure()
-    df.plot()
+    df.plot(legend=False)
     plt.title('Dataset')
     
     
@@ -340,7 +348,7 @@ if __name__ == "__main__":
     ngen = 50
     cxpb = 0.8
     mutpb = 0.05
-    pb_pace=0.05
+    pb_pace=0.1
     param_list=["original","rand",'size',"cross","mutate"] #"optimal"
     
     plotData(30)
@@ -364,15 +372,6 @@ if __name__ == "__main__":
                 dico_hof[rand]=toolbox.compile(expr=hof[0]) 
                 list_hof.append(dico_hof)
                 
-                mini=10
-                for seq in GA_dist.attackAnswer:
-                    dist=Cosine(seq,toolbox.compile(expr=hof[0]))
-                    if mini>dist:
-                        mini=dist
-                if mini<0.4:
-                    print(mini)
-                    print(toolbox.compile(expr=hof[0]))
-           
         elif param=="size":
             print ("Size   Max_fit   Gen")
             size=80
@@ -382,16 +381,6 @@ if __name__ == "__main__":
                 hof=main(rand,size+i,cxpb,mutpb,ngen,param)
                 dico_hof[size+i]=toolbox.compile(expr=hof[0]) 
                 list_hof.append(dico_hof)
-                
-                mini=10
-                for seq in GA_dist.attackAnswer:
-                    dist=Cosine(seq,toolbox.compile(expr=hof[0]))
-                    if mini>dist:
-                        mini=dist
-                if mini<0.4:
-                    print(mini)
-                    print(toolbox.compile(expr=hof[0]))
-
      
         elif param=="cross":
             print ("CrossProba   Max_fit   Gen")
@@ -403,16 +392,7 @@ if __name__ == "__main__":
                 hof=main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param)
                 dico_hof[round(cxpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
                 list_hof.append(dico_hof)
-                
-                mini=10
-                for seq in GA_dist.attackAnswer:
-                    dist=Cosine(seq,toolbox.compile(expr=hof[0]))
-                    if mini>dist:
-                        mini=dist
-                if mini<0.4:
-                    print(mini)
-                    print(toolbox.compile(expr=hof[0]))
-      
+                  
         elif param=="mutate":
             NB_SIMU=int((1-cxpb)/pb_pace)
             print ("MutPb   Max_fit   Gen")
@@ -423,15 +403,6 @@ if __name__ == "__main__":
                 hof=main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param)
                 dico_hof[round(mutpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
                 list_hof.append(dico_hof)
-                
-                mini=10
-                for seq in GA_dist.attackAnswer:
-                    dist=Cosine(seq,toolbox.compile(expr=hof[0]))
-                    if mini>dist:
-                        mini=dist
-                if mini<0.4:
-                    print(mini)
-                    print(toolbox.compile(expr=hof[0]))
 
 #        elif param=="optimal":
 #            NB_SIMU=50

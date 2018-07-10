@@ -89,12 +89,9 @@ def scenario(number):
                 strdate=act[2]
             else:
                 strdate=act[2][1:len(act[2])-1]
-            print(strdate)
             act[2]=datetime.strptime(strdate, '%m/%d/%Y %H:%M:%S')
-            #print(act[2])
             list_act.append(act)
         list_act.sort(key=lambda r: r[2])
-        #print(list_act)
         
         first = list_act[0]
         last=list_act[-1]
@@ -103,21 +100,14 @@ def scenario(number):
         days=[]
         sequence=[]
         date=[]
-
-    #    action=data[0]
-    #    
         beginning=first[2].date()
-        print(beginning)
-    #    print(action)
-    #    activity(action)
-        
+
         #TODO sort by date the data before. So needs to register the data into dict instead of processing line by line
         for data in list_act:
             action=data[0]
             
             if beginning!=data[2].date():
-                date.append(beginning)
-                
+                date.append(beginning)               
                 beginning=data[2].date()
                 days.append(sequence)
                 sequence=[]
@@ -134,7 +124,7 @@ def scenario(number):
     return date,days
 
 #scenarioNB=int(input('Choose the scenario number to train for (1-5): '))
-scenarioNB=5
+scenarioNB=1
 date,attackAnswer=scenario(scenarioNB)
 print('The scenario '+str(scenarioNB)+' is the sequence:')
 for session in attackAnswer:
