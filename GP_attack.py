@@ -87,7 +87,7 @@ def daysSeq(list_actions):
 
     return date,days
 
-#Takes the activity from the file of one user, combine it in one feature vector
+#Takes the activity from the file of one user
 list_actions=[]
 for line in user_file:
     data=line.split(',')
@@ -293,47 +293,18 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
     list_max=[]
     for elt in logbook:
-        list_max.append(elt['max'])
+        list_max.append(elt['avg'])
     max_fit=max(list_max)
     list_results.append(max_fit)
 
     i=0
-    while(logbook[i]['max']!=max_fit):
+    while(logbook[i]['avg']!=max_fit):
         i+=1
     list_results.append(logbook[i]['gen'])
-    #print(list_results)
     
-    
-    #Shows the minimum fitness  after all the generations and the first generation where this max_fit was achieved
-#    list_min=[]
-#    for elt in logbook:
-#        list_min.append(elt['min'])
-#    min_fit=min(list_min)
-#    list_results.append(min_fit)
-#
-#    i=0
-#    while(logbook[i]['min']!=min_fit):
-#        i+=1
-#    list_results.append(logbook[i]['gen'])
-#    #print(list_results)
-
     print ("{0}     {1}    {2}".format(round(list_results[0],3),round(list_results[1],3),list_results[2]))
     
-#    if list_results[1]==-1000:
-#        print("BUG ????????????????????????????????????????????")
-##        for ind in pop:
-##            print(ind)
-##            print(toolbox.compile(expr=ind))
-#        for ind in hof:
-#            #print (ind)
-#            print(toolbox.compile(expr=ind))
-    
-    #Shows the individuals in the Hall of Fame
-#    for ind in hof:
-##        print (ind)
-#        print(toolbox.compile(expr=ind))
-    
-    #return pop, stats, hof
+
     return hof
 
 
@@ -393,9 +364,13 @@ if __name__ == "__main__":
                 dico_hof[rand]=toolbox.compile(expr=hof[0]) 
                 list_hof.append(dico_hof)
                 
-                dist=Cosine(GA_dist.attackAnswer,toolbox.compile(expr=hof[0]))
-                if dist<0.4:
-                    print(dist)
+                mini=10
+                for seq in GA_dist.attackAnswer:
+                    dist=Cosine(seq,toolbox.compile(expr=hof[0]))
+                    if mini>dist:
+                        mini=dist
+                if mini<0.4:
+                    print(mini)
                     print(toolbox.compile(expr=hof[0]))
            
         elif param=="size":
@@ -408,9 +383,13 @@ if __name__ == "__main__":
                 dico_hof[size+i]=toolbox.compile(expr=hof[0]) 
                 list_hof.append(dico_hof)
                 
-                dist=Cosine(GA_dist.attackAnswer,toolbox.compile(expr=hof[0]))
-                if dist<0.4:
-                    print(dist)
+                mini=10
+                for seq in GA_dist.attackAnswer:
+                    dist=Cosine(seq,toolbox.compile(expr=hof[0]))
+                    if mini>dist:
+                        mini=dist
+                if mini<0.4:
+                    print(mini)
                     print(toolbox.compile(expr=hof[0]))
 
      
@@ -425,9 +404,13 @@ if __name__ == "__main__":
                 dico_hof[round(cxpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
                 list_hof.append(dico_hof)
                 
-                dist=Cosine(GA_dist.attackAnswer,toolbox.compile(expr=hof[0]))
-                if dist<0.4:
-                    print(dist)
+                mini=10
+                for seq in GA_dist.attackAnswer:
+                    dist=Cosine(seq,toolbox.compile(expr=hof[0]))
+                    if mini>dist:
+                        mini=dist
+                if mini<0.4:
+                    print(mini)
                     print(toolbox.compile(expr=hof[0]))
       
         elif param=="mutate":
@@ -441,9 +424,13 @@ if __name__ == "__main__":
                 dico_hof[round(mutpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
                 list_hof.append(dico_hof)
                 
-                dist=Cosine(GA_dist.attackAnswer,toolbox.compile(expr=hof[0]))
-                if dist<0.4:
-                    print(dist)
+                mini=10
+                for seq in GA_dist.attackAnswer:
+                    dist=Cosine(seq,toolbox.compile(expr=hof[0]))
+                    if mini>dist:
+                        mini=dist
+                if mini<0.4:
+                    print(mini)
                     print(toolbox.compile(expr=hof[0]))
 
 #        elif param=="optimal":

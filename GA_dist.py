@@ -7,7 +7,8 @@ from math import sqrt
 import random
 import numpy
 import time
-from datetime import date,datetime
+from datetime import datetime
+import os
 
 # To assure reproductibility, the RNG seed is set prior to the items
 # dict initialization. It is also seeded in main().
@@ -40,11 +41,6 @@ actions=["logon","email","http","device","file"]
 #12 copy
 #13 delete
 def scenario(number):
-    file=open('D:/answers/r6.2-'+str(number)+'.csv')
-    days=[]
-    sequence=[]
-    date=[]
-    
     def activity(action):
         if action==actions[0]:
             if data[5][1:len(data[5])-2]=='Logon':
@@ -81,39 +77,70 @@ def scenario(number):
                 sequence.append(8)
             else:
                 sequence.append(9)
-    first_line = file.readline()
-    data=first_line.split(',')
-    action=data[0]
-    beginning=datetime.strptime(data[2][1:len(data[2])-1], '%m/%d/%Y %H:%M:%S').date()
-    activity(action)
-    
-    #TODO sort by date the data before. So needs to register the data into dict instead of processing line by line
-    for line in file:
-        data=line.split(',')
-        print(data)
-        action=data[0]
+                
+    path='D:/answers/r6.2-'+str(number)+'.csv'
+    with open(path) as file:
+        lines = file.readlines()
         
-        if beginning==datetime.strptime(data[2][1:len(data[2])-1], '%m/%d/%Y %H:%M:%S').date():
-            activity(action)
+        list_act=[]        
+        for line in lines:
+            act=line.split(',')
+            if number==5:
+                strdate=act[2]
+            else:
+                strdate=act[2][1:len(act[2])-1]
+            print(strdate)
+            act[2]=datetime.strptime(strdate, '%m/%d/%Y %H:%M:%S')
+            #print(act[2])
+            list_act.append(act)
+        list_act.sort(key=lambda r: r[2])
+        #print(list_act)
         
-        else:
-            date.append(beginning)
-            print(beginning)
-            beginning=datetime.strptime(data[2][1:len(data[2])-1], '%m/%d/%Y %H:%M:%S').date()
-            days.append(sequence)
-            sequence=[]
-            activity(action)
+        first = list_act[0]
+        last=list_act[-1]
+        
+        
+        days=[]
+        sequence=[]
+        date=[]
 
+    #    action=data[0]
+    #    
+        beginning=first[2].date()
+        print(beginning)
+    #    print(action)
+    #    activity(action)
+        
+        #TODO sort by date the data before. So needs to register the data into dict instead of processing line by line
+        for data in list_act:
+            action=data[0]
+            
+            if beginning!=data[2].date():
+                date.append(beginning)
+                
+                beginning=data[2].date()
+                days.append(sequence)
+                sequence=[]
+                activity(action)
+                
+            elif data==last:
+                activity(action)
+                date.append(beginning)
+                days.append(sequence) 
+            
+            elif beginning==data[2].date():
+                activity(action)
+            
     return date,days
 
 #scenarioNB=int(input('Choose the scenario number to train for (1-5): '))
-scenarioNB=1
+scenarioNB=5
 date,attackAnswer=scenario(scenarioNB)
 print('The scenario '+str(scenarioNB)+' is the sequence:')
 for session in attackAnswer:
     print(session)
-IND_INIT_SIZE = len(attackAnswer)-2
-MAX_ACTIONS = len(attackAnswer)+5
+IND_INIT_SIZE = min(map(len, attackAnswer))
+MAX_ACTIONS = max(map(len, attackAnswer))+5
 
 # =============================================================================
 
@@ -158,10 +185,11 @@ def fitness(ind):
     #coef=Jaccard(attackAnswer,ind)
     mini=1000
     for attack in attackAnswer:
-        coef=Cosine(attack,ind)
-        if mini>coef:
-            mini=coef
-    fit=1-mini
+        fit=1-Cosine(attack,ind)
+        if mini>fit:
+            mini=fit
+            
+
     return fit,
 
 def mutList(individual):
@@ -189,7 +217,9 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     list_results=[rand]
     
     pop = toolbox.population(n=MU)
-    
+#    for ind in pop:
+#        print(ind)
+        
     hof = tools.ParetoFront()
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean, axis=0)
@@ -218,34 +248,34 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
 if __name__ == "__main__":
 # =============================================================================
 
-    creator.create("Fitness", base.Fitness, weights=(-1.0,))
-    creator.create("Individual", list, fitness=creator.Fitness)
-    
-    toolbox = base.Toolbox()
-    
-    # Attribute generator
-    toolbox.register("attr_action", random.randint,1,13)
-    
-    # Structure initializers
-    toolbox.register("individual", tools.initRepeat, creator.Individual,
-        toolbox.attr_action, IND_INIT_SIZE)
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    
-    toolbox.register("evaluate", fitness)
-    toolbox.register("mate", tools.cxTwoPoint)
-    toolbox.register("mutate", mutList)
-    toolbox.register("select", tools.selNSGA2)
-
-  
-    NB_SIMU=10
-
-    ngen = 30
-    mu = 70
-    lamb = 100
-    cxpb = 0.7
-    mutpb = 0.2
-    pb_pace=0.02
-    print ("Rand   Min_fit   Gen")
-    for i in range(NB_SIMU):
-        rand=int(time.clock()*10)
-        main(rand,mu,lamb,cxpb,mutpb,ngen)
+#    creator.create("Fitness", base.Fitness, weights=(-1.0,))
+#    creator.create("Individual", list, fitness=creator.Fitness)
+#    
+#    toolbox = base.Toolbox()
+#    
+#    # Attribute generator
+#    toolbox.register("attr_action", random.randint,1,13)
+#    
+#    # Structure initializers
+#    toolbox.register("individual", tools.initRepeat, creator.Individual,
+#        toolbox.attr_action, IND_INIT_SIZE)
+#    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+#    
+#    toolbox.register("evaluate", fitness)
+#    toolbox.register("mate", tools.cxTwoPoint)
+#    toolbox.register("mutate", mutList)
+#    toolbox.register("select", tools.selNSGA2)
+#
+#  
+    NB_SIMU=1
+#
+#    ngen = 30
+#    mu = 70
+#    lamb = 100
+#    cxpb = 0.7
+#    mutpb = 0.2
+#    pb_pace=0.02
+#    print ("Rand   Min_fit   Gen")
+#    for i in range(NB_SIMU):
+#        rand=int(time.clock()*10)
+#        main(rand,mu,lamb,cxpb,mutpb,ngen)
