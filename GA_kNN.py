@@ -8,9 +8,7 @@ import time
 from datetime import datetime
 import kNN
 import numpy as np
-
 import pandas
-from pandas.tools.plotting import parallel_coordinates
 import matplotlib.pyplot as plt
 
 IND_INIT_SIZE = 5
@@ -19,16 +17,16 @@ MAX_ACTIONS = 50
 # dict initialization. It is also seeded in main().
 random.seed(65)
   
-#Creation of the sequences of actions
+# List of the possible actions
 actions=["logon","email","http","device","file"]
 
 # =============================================================================
 
-"""Date of the action"""
+
 def actionDate():
-    #year = 2010
-    #month = random.randint(1, 12)
-    #day = random.randint(1, 28)
+    """It returns a random datetime for an action. The date is the same because the feature vectors represent one day.
+    """
+    
     year = 2010
     month = 1
     day = 1
@@ -39,6 +37,11 @@ def actionDate():
     return action_date
 
 def action():
+    """It returns a random dictionary representing an action. 
+    The dictionary contains the features used in the feature vector.
+    This function is used for generating the individuals.
+    """
+    
     action={}
     action["type"]=random.choice(actions)
     action["date"]=actionDate()
@@ -50,12 +53,23 @@ def action():
         action["activity"]=random.choice(["Send","View"])
     return action
 
-"""Creates the feature vector"""
+
 def session():
+    """It creates and returns the individuals for the GA as a feature vector.
+    A feature vector contains the:
+    - hour of beginning of the day
+    - duration of the day (until last action done in the day)
+    - number of logons/logoffs
+    - number of emails sent
+    - the number of removable medias
+    - the number of activities on the web
+   """
+   
+    # ind is a list of dictionaries for the actions. 
     ind=[]
     for i in range(IND_INIT_SIZE):
         ind.append(action())
-    ind.sort(key=lambda r: r["date"])   #sort the sequences by date of action
+    ind.sort(key=lambda r: r["date"])   # sorts the sequences by date of action
     
     beginning=ind[0]['date']
     feature_vect=creator.Individual()
@@ -70,21 +84,25 @@ def session():
         elif act['type']=='email' and act['activity']=='Send':
             feature_vect[3]+=1
         elif act['type']=='file' and (act["to_removable_media"]==True or act["from_removable_media"]==True):
-            feature_vect[4]=1
+            feature_vect[4]=+1
         elif act["type"]=="http":
             feature_vect[5]+=1
 
-    beginning=act['date']
-    feature_vect[1]=duration.total_seconds()/60
+    beginning=act['date']   #XXX wtf
+    feature_vect[1]=duration.total_seconds()/60 # the duration is in minutes
           
-    #Normalize the vector
+    # Normalize the vector
     maxFV=max(feature_vect)
     for i in range(len(feature_vect)):
         feature_vect[i]/=maxFV
         
     return feature_vect
 
+
 def mute(individual):
+    """First mutation method, the best one. 
+    It takes into account the max and the min of the features for one user from the dataset.
+    """
     mutatePt=random.randint(0,len(individual)-1)
     if mutatePt==0:
         individual[mutatePt]=random.uniform(kNN.features_min[0], kNN.features_max[0])
@@ -101,6 +119,9 @@ def mute(individual):
 
 
 def mute2(individual):
+    """Second mutation method (first one implemented).
+    The values for random.uniform come from one random user. It should be less efficient.
+    """
     mutatePt=random.randint(0,len(individual)-1)
     if mutatePt==0:
         individual[mutatePt]=random.uniform(0.0, 0.02)
@@ -112,10 +133,12 @@ def mute2(individual):
     return individual,
 
 def fitness(ind):
+    """Returns the kNN distance.
+    """
     return kNN.distance(ind),
 
 # =============================================================================
-
+# Create the classes used for the GA
 creator.create("Fitness", base.Fitness, weights=(1.0,))
 creator.create("Individual", list, fitness=creator.Fitness) #,username=None
 
@@ -137,6 +160,9 @@ toolbox.register("select", tools.selNSGA2)
 # =============================================================================
 
 def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
+    """main executes one run of the GA and print the results.
+    """
+    
     random.seed(rand)
     NGEN = ngen
     MU = mu
@@ -144,6 +170,7 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     CXPB = cxpb
     MUTPB = mutpb
     
+    # Used for printing the results. It is the parameter that is changed one run from another
     if param=="rand" or param=="optimal":
         list_results=[rand]
     elif param=="mu":
@@ -159,6 +186,7 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     elif param=="original":
         list_results=[0]
     
+    # Initialization of the objects for the GA
     pop = toolbox.population(n=MU)
     hof = tools.ParetoFront()
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -167,19 +195,19 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     stats.register("min", np.min, axis=0)
     stats.register("max", np.max, axis=0)
 
+    # Run of the GA
     p,logbook=algorithms.eaMuPlusLambda(pop, toolbox, MU, LAMBDA, CXPB, MUTPB, NGEN, stats,
                               halloffame=hof,verbose=0)
     
-    list_max=[]
+    # Takes the max fitness of the population from all of the runs
+    max_fit=0
+    max_gen=0
     for elt in logbook:
-        list_max.append(elt['max'][0])
-    max_fit=max(list_max)       #list_max[1]
+        if elt['max'][0]>max_fit:
+            max_fit=elt['max'][0]
+            max_gen=elt['gen']
     list_results.append(max_fit)
-
-    i=0
-    while(logbook[i]['max']!=max_fit):
-        i+=1
-    list_results.append(logbook[i]['gen'])
+    list_results.append(max_gen)
 
     print ("{0}     {1}    {2}    {3}".format(round(list_results[1],3),round(list_results[2],3),round(list_results[0],3),hof[0]))
 #    for ind in hof:
@@ -188,19 +216,21 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     return pop, stats, hof
 
 def plot(list_hof,param):
+    """Plot the results using parallel coordinates
+    """
     plt.figure()    
     df = pandas.DataFrame(list_hof,
                           columns=["name","begin hour","logon","emails",'device','web'])
-    parallel_coordinates(df,"name")
+    pandas.tools.plotting.parallel_coordinates(df,"name")
     plt.title(param)
     plt.show()
 
     
 if __name__ == "__main__":
-    #param='mu'
     
     NB_SIMU=10
     
+    #The initial parameters    
     rand=69
     ngen = 100
     mu = 50
@@ -208,9 +238,10 @@ if __name__ == "__main__":
     cxpb = 0.8
     mutpb = 0.05
     pb_pace=0.05
+    
     param_list=["original","rand","mu","lamb","cross","mutate"] #"optimal"
     
-    
+    #It will makes NB_SIMU runs for each parameter
     for param in param_list:
         print("\n")
         list_hof=[]

@@ -9,6 +9,7 @@ path='D:/r6.2/users/'
 list_users=os.listdir(path)
 attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 
+# You can choose the user from the dataset : from list_users or from attackers
 #user=list_users[2]
 usr=attackers[4]
 user=usr+".csv" #first insider attacker
@@ -17,15 +18,18 @@ NB_NEIGHBORS=3
 
 
 
-"""Reads the data in the csv file for one user, transforms it to a dictionary containing the values for ONE action"""
 def action(data):
+    """Reads the data in the csv file for one user, transforms it to a dictionary containing the values for ONE action.
+    Returns this dictionary
+    """
+    
     action={}
     action["type"]=data[0]
     action["date"]=datetime.strptime(data[1], '%m/%d/%Y %H:%M:%S')
     #action["pc"]=data[2]              
-    #TODO number of pc as feature ?
+    # TODO number of pc as feature ?
     
-    #all other attributes useless if using HMM ?
+    # XXX all other attributes useless if using HMM ?
     if action["type"]=="l" or action["type"]=="h":
         action["activity"]=data[3][:len(data[3])-1]
     #elif action["type"]=="h":
@@ -54,33 +58,46 @@ def action(data):
     return action
 
 
-"""Returns the list of the days of activities. One day is represented by a feature vector with:
+ 
+def daysVector(list_actions):
+    """Returns the list of the days of activities. One day is represented by a feature vector with:
     - hour of beginning of the day
     - duration of the day (until last action done in the day)
     - number of logons/logoffs
     - number of emails sent
     - if there's a removable media
     - the number of activities on the web
-   """ 
-def daysVector(list_actions):
+   """
+   
     days=[]
     beginning=list_actions[0]['date']
     feature_vect=[0]*6
     feature_vect[0]=beginning.hour
-    #date=[list_actions[0]['date'].date()]
     date=[]
     
+    def actionToFeature(act):
+        if act['type']=='l':
+            feature_vect[2]+=1
+        elif act['type']=='e' and act['activity']=='Send':
+            feature_vect[3]+=1
+        elif act['type']=='f' and (act["to_removable_media"]=='True' or act["from_removable_media"]=='True'):
+            feature_vect[4]=+1
+        elif act["type"]=="h":
+            feature_vect[5]+=1
+    
     for act in list_actions:
+        #If it's the last action
+        if act==list_actions[-1]:
+            actionToFeature(act)
+            date.append(beginning.date())
+            days.append(feature_vect)
+        
+        #The action is done the same day
         if act['date'].date()==beginning.date():
             duration=act['date']-beginning
-            if act['type']=='l':
-                feature_vect[2]+=1
-            elif act['type']=='e' and act['activity']=='Send':
-                feature_vect[3]+=1
-            elif act['type']=='f' and (act["to_removable_media"]=='True' or act["from_removable_media"]=='True'):
-                feature_vect[4]=+1
-            elif act["type"]=="h":
-                feature_vect[5]+=1
+            actionToFeature(act)
+        
+        #The date of the action is different, so it is a new one
         else:
             date.append(beginning.date())
             beginning=act['date']
@@ -88,21 +105,13 @@ def daysVector(list_actions):
             days.append(feature_vect)
             feature_vect=[0]*6
             feature_vect[0]=act['date'].hour
-            
-            if act['type']=='l':
-                feature_vect[2]+=1
-            elif act['type']=='e' and act['activity']=='Send':
-                feature_vect[3]+=1
-            elif act['type']=='f' and (act["to_removable_media"]=='True' or act["from_removable_media"]=='True'):
-                feature_vect[4]=+1
-            elif act["type"]=="h":
-                feature_vect[5]+=1
+            actionToFeature(act)
     
-    #Normalize the vector
+    # It normalizes the vector
     for i in range (len(days)):
         days[i]= [j/max(days[i]) for j in days[i]]
 
-    #return days
+
     return date,days
 
 
@@ -113,9 +122,13 @@ for line in user_file:
     activity=action(data)
     list_actions.append(activity)
 
-list_actions.sort(key=lambda r: r["date"])   #sort the sequences by date of action 
+# Sorts the sequences by date of action 
+list_actions.sort(key=lambda r: r["date"])   
 
+# Creates a dictionary of the sequences, might be useless
 session_date,sessions=daysVector(list_actions)
+for a in sessions:
+    print(a)
 dico_session={}
 for i in range(len(sessions)):
     dico_session[session_date[i]]=sessions[i]
@@ -130,29 +143,32 @@ features_max=[]
 features_max.append(max(X[:,0])*1.2)
 for i in range(2,6):
     features_max.append((max(X[:,i])+0.0001)*1.2) #*1.2 to allow a small range, +0.0001 in case the max is one, but an anomalous attack can change the behavior
-#'print(features_max)
 
+#To get the lower limit for the possible values when we mutate the individuals
 features_min=[]
 features_min.append(min(X[:,0])*0.6)
 for i in range(2,6):
     features_min.append(min(X[:,i])*0.6) #*1.2 to allow a small range, +0.0001 in case the max is one, but an anomalous attack can change the behavior
-#print(features_min)
 
 
-#kNN Unsupervised
+# kNN Unsupervised
 nbrs = NearestNeighbors(n_neighbors=NB_NEIGHBORS, algorithm='kd_tree').fit(X)   #kd_tree fastest
 
 
-"""
-Fitness for GA. Evaluate if the feature vector is anomalous or not
-"""
+
 def distance(individual):
+    """
+    Fitness for GA. Evaluate if the feature vector is anomalous or not by calculating the distance. 
+    The higher the value, the more anomalous is the sequence.
+    """
     #Unsupervised kNN
     distances, indices = nbrs.kneighbors([individual])
     return distances[0,2]  
 
+# Used to print/keep the anomalous sequences of one attacker from the dataset. The dates come from the answer files
+# They can be used for comparison with the results
 if 'usr' in vars():
-    attacks=[]  #TODO later, to compare the results with the attacks in this list, using distance or kNN
+    attacks=[]  #TODO compare the results with the attacks in this list, using distance or kNN
     year=2010
     if usr==attackers[0]:
         duration=9
@@ -192,12 +208,3 @@ if 'usr' in vars():
                 #print(dico_session[key])
                 attacks.append(dico_session[key])
                 
-
-
-
-if __name__ == "__main__":
-#    print('begin,duration,logon,emails,media,web')
-#    for i in range(50):
-#        print(sessions[i])
-    
-    print(distance([0,1,0.5,0.003,1,0.998,0.002,1]))

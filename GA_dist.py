@@ -27,19 +27,19 @@ actions=["logon","email","http","device","file"]
 
 # =============================================================================
 
-#1 logon
-#2 logoff
-#3 connect
-#4 disconnect
-#5 WWW Download"
-#6 "WWW Upload"
-#7 "WWW Visit
-#8 Send
-#9 View
-#10 open, 
-#11 write, 
-#12 copy
-#13 delete
+# 1 logon
+# 2 logoff
+# 3 connect
+# 4 disconnect
+# 5 WWW Download"
+# 6 "WWW Upload"
+# 7 "WWW Visit
+# 8 Send
+# 9 View
+# 10 open, 
+# 11 write, 
+# 12 copy
+# 13 delete
 def scenario(number):
     def activity(action):
         if action==actions[0]:
@@ -102,7 +102,6 @@ def scenario(number):
         date=[]
         beginning=first[2].date()
 
-        #TODO sort by date the data before. So needs to register the data into dict instead of processing line by line
         for data in list_act:
             action=data[0]
             
@@ -183,7 +182,8 @@ def fitness(ind):
     return fit,
 
 def mutList(individual):
-    """Mutation that pops or add an element."""
+    """Mutation that pops or add an element.
+    """
     if random.random() < 0.5:
         if len(individual) > 0:     # We cannot pop from an empty set
             individual.pop(random.randint(0,len(individual)-1))
@@ -220,52 +220,54 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     p,logbook=algorithms.eaMuPlusLambda(pop, toolbox, MU, LAMBDA, CXPB, MUTPB, NGEN, stats,
                               halloffame=hof,verbose=0)
     
-    list_min=[]
+    
+    min_fit=1000
+    min_gen=0
     for elt in logbook:
-        list_min.append(elt['min'][0])
-    min_fit=min(list_min)       #list_min[1]
+        if elt['min'][0]<min_fit:
+            min_fit=elt['min'][0]
+            min_gen=elt['gen']
     list_results.append(min_fit)
+    list_results.append(min_gen)
 
-    i=0
-    while(logbook[i]['min']!=min_fit):
-        i+=1
-    list_results.append(logbook[i]['gen'])
+
     print ("{0}     {1}    {2}   {3}".format(list_results[0],list_results[1],list_results[2],hof[0]))
     
     return pop, stats, hof
 
-
-if __name__ == "__main__":
 # =============================================================================
+    
+if __name__ == "__main__":
 
-#    creator.create("Fitness", base.Fitness, weights=(-1.0,))
-#    creator.create("Individual", list, fitness=creator.Fitness)
-#    
-#    toolbox = base.Toolbox()
-#    
-#    # Attribute generator
-#    toolbox.register("attr_action", random.randint,1,13)
-#    
-#    # Structure initializers
-#    toolbox.register("individual", tools.initRepeat, creator.Individual,
-#        toolbox.attr_action, IND_INIT_SIZE)
-#    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-#    
-#    toolbox.register("evaluate", fitness)
-#    toolbox.register("mate", tools.cxTwoPoint)
-#    toolbox.register("mutate", mutList)
-#    toolbox.register("select", tools.selNSGA2)
-#
-#  
-    NB_SIMU=1
-#
-#    ngen = 30
-#    mu = 70
-#    lamb = 100
-#    cxpb = 0.7
-#    mutpb = 0.2
-#    pb_pace=0.02
-#    print ("Rand   Min_fit   Gen")
-#    for i in range(NB_SIMU):
-#        rand=int(time.clock()*10)
-#        main(rand,mu,lamb,cxpb,mutpb,ngen)
+
+    creator.create("Fitness", base.Fitness, weights=(-1.0,))
+    creator.create("Individual", list, fitness=creator.Fitness)
+    
+    toolbox = base.Toolbox()
+    
+    # Attribute generator
+    toolbox.register("attr_action", random.randint,1,13)
+    
+    # Structure initializers
+    toolbox.register("individual", tools.initRepeat, creator.Individual,
+        toolbox.attr_action, IND_INIT_SIZE)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+    
+    toolbox.register("evaluate", fitness)
+    toolbox.register("mate", tools.cxTwoPoint)
+    toolbox.register("mutate", mutList)
+    toolbox.register("select", tools.selNSGA2)
+
+  
+    NB_SIMU=10
+
+    ngen = 30
+    mu = 70
+    lamb = 100
+    cxpb = 0.7
+    mutpb = 0.2
+    pb_pace=0.02
+    print ("Rand   Min_fit   Gen")
+    for i in range(NB_SIMU):
+        rand=int(time.clock()*10)
+        main(rand,mu,lamb,cxpb,mutpb,ngen)

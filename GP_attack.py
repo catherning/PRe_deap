@@ -16,26 +16,48 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import GA_dist
 
-MAX_ACTIONS=100
-MIN_ACTIONS=6
 NB_ACTIONS=13
+# To change accordingly
 path='D:/r6.2/users/'
 list_users=os.listdir(path)
 attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 actions=["l","e","h","d","f"]
 
+# You can choose the user from the dataset : from list_users or from attackers
 user=list_users[12]
 usr=attackers[0]
 user=usr+".csv" #first insider attacker
 user_file=open(path+user)
+
+# You can change this parameter
 NB_NEIGHBORS=3
+MAX_ACTIONS=100
+MIN_ACTIONS=6
 
-
+# 1 logon
+# 2 logoff
+# 3 connect
+# 4 disconnect
+# 5 WWW Download"
+# 6 "WWW Upload"
+# 7 "WWW Visit
+# 8 Send
+# 9 View
+# 10 open, 
+# 11 write, 
+# 12 copy
+# 13 delete
 def daysSeq(list_actions):
+    """Returns two lists:
+        - dates : a list of the dates when the user did something
+        - days : a list of the sequences
+        One sequence is a list of numbers representing a list of actions
+    """
+    
     days=[]
     beginning=list_actions[0]['date']
     sequence=[]
-    date=[]
+    dates=[]
     
     def activity(act):
         if act['type']==actions[0]:
@@ -75,35 +97,44 @@ def daysSeq(list_actions):
                 sequence.append(9)
         
     for act in list_actions:
-        if beginning.date()==act['date'].date():
+        # For the last action
+        if act==list_actions[-1]:
             activity(act)
-
+            dates.append(beginning.date())
+            days.append(sequence)
+            
+        # The action is done on the same day
+        elif beginning.date()==act['date'].date():
+            activity(act)
+        
+        # It creates a new sequence for the new day of actions
         else:
-            date.append(beginning.date())
+            dates.append(beginning.date())
             beginning=act['date']
             days.append(sequence)
             sequence=[]
             activity(act)
 
-    return date,days
+    return dates,days
 
-#Takes the activity from the file of one user
+# Takes the activity from the file of one user, puts the dictionaries into the list list_actions
 list_actions=[]
 for line in user_file:
     data=line.split(',')
     activity=kNN.action(data)
     list_actions.append(activity)
-
-list_actions.sort(key=lambda r: r["date"])   #sort the sequences by date of action 
+    
+# Sort the sequences by date of action 
+list_actions.sort(key=lambda r: r["date"])   
 
 session_date,sessions=daysSeq(list_actions)
-    
+# Creates the dictionary of the sequences and their dates for the key
 dico_session={}
 for i in range(len(sessions)):
     dico_session[session_date[i]]=sessions[i]
 
-
-### Functions set
+# ==================================================================================================
+### Function set
 
 def add(left,right):
     left[len(left)-1]=(left[len(left)-1]+right[0])%NB_ACTIONS+1 #+1 bc there's no action numbered 0, but it's by convention
@@ -131,17 +162,22 @@ def concatenate(left,right):
 def repeat(left):
     return left+left
 
-    
+# It is possible to create other if_then_else functions
 def if_then_else(left,right,out1,out2):
     if left[-1]<right[0]:
         return left+out1
     else:
         return left+out2
 
-"""
-Fitness for GA. Evaluate if the feature vector is anomalous or not
-"""    
+
+
+# =============================================================================
+ 
 def Cosine(dataseq,seq):
+    """
+    Calculate the Cosine distance between two sequences
+    """   
+    
     a=[0]*14
     b=[0]*14
     for elt in dataseq:
@@ -153,9 +189,7 @@ def Cosine(dataseq,seq):
     normB=sqrt(sum(i**2 for i in b))
     return 1-(dot/(normA*normB))
     
-# Returns the minimum number of insertions, deletions, substitutions,
-# and transpositions needed to transform one string into another.
-#
+
 # @author Michael Homer
 # http://mwh.geek.nz/2009/04/26/python-damerau-levenshtein-distance/
 # https://genepidgin.readthedocs.io/en/latest/compare.html
@@ -174,10 +208,7 @@ def damerauLevenshteinHomerDistance(seq1, seq2):
     This implementation is O(N*M) time and O(M) space, for N and M the
     lengths of the two sequences.
     """
-    # codesnippet:D0DE4716-B6E6-4161-9219-2903BF8F547F
-    # Conceptually, this is based on a len(seq1) + 1 * len(seq2) + 1 matrix.
-    # However, only the current and two previous rows are needed at once,
-    # so we only store those.
+
     oneago = None
     thisrow = list(range(1, len(seq2) + 1)) + [0]
     for x in range(len(seq1)):
@@ -197,13 +228,14 @@ def damerauLevenshteinHomerDistance(seq1, seq2):
     return thisrow[len(seq2) - 1]
 
 def distance(seq):
+    # Not wanted individuals
     if len(seq)>MAX_ACTIONS or len(seq)<=MIN_ACTIONS:
         return -1000
     
+    # Calculate the distance with 30 sequences from the dataset, we take the smallest one.
     mini=1000
     for i in range(30):
-#        if mini>Cosine(sessions[i],seq):
-#            mini=Cosine(sessions[i],seq)
+        # You can choose which distance to use
         new=damerauLevenshteinHomerDistance(sessions[i],seq)
         #new=Cosine(sessions[i],seq)
         if mini>new:
@@ -211,13 +243,15 @@ def distance(seq):
     return mini
 
 def fitness(individual):
+    """
+    Calculate the fitness of one individual by compiling it and calculating the smallest distance of the sequence to the dataset
+    """
     seq = toolbox.compile(expr=individual)
     dist=distance(seq)
-    #print(dist)
     return dist,
 
 # =============================================================================
-    
+# Create the functions used for the GP
 pset = gp.PrimitiveSet("MAIN", 0)
 pset.addPrimitive(add, 2)
 pset.addPrimitive(sub, 2)
@@ -258,6 +292,8 @@ toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter('height'), max
 # =============================================================================
 
 def main(rand,size,cxpb,mutpb,ngen,param):
+    """main executes one run of the GP and print the results.
+    """
     random.seed(rand)
     list_results=[rand]
     
@@ -286,16 +322,14 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     
     
     #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
-    list_max=[]
+    max_fit=0
+    max_gen=0
     for elt in logbook:
-        list_max.append(elt['avg'])
-    max_fit=max(list_max)
+        if elt['avg']>max_fit:
+            max_fit=elt['avg']
+            max_gen=elt['gen']
     list_results.append(max_fit)
-
-    i=0
-    while(logbook[i]['avg']!=max_fit):
-        i+=1
-    list_results.append(logbook[i]['gen'])
+    list_results.append(max_gen)
     
     #Calculates the shortest distance to the real attacks
     mini=10
@@ -306,9 +340,7 @@ def main(rand,size,cxpb,mutpb,ngen,param):
             if mini>dist:
                 mini=dist
                 close_seq=seq
-    if mini<0.4:
-#        print(mini)
-#        print(toolbox.compile(expr=hof[0]))   
+    if mini<0.4:   
         print ("{0}   {1}   {2}   {3}   {4}   {5}".format(round(list_results[0],3),round(list_results[1],3),list_results[2],mini,toolbox.compile(expr=hof[0]),close_seq))
     else:
         print ("{0}   {1}   {2}".format(round(list_results[0],3),round(list_results[1],3),list_results[2]))
@@ -317,6 +349,8 @@ def main(rand,size,cxpb,mutpb,ngen,param):
 
 
 def plot(list_hof,param):
+    """Plot the results as a broken line for one sequence
+    """
     df = pd.DataFrame(list_hof[0])
     if param!='original':
         for i in range(len(list_hof)):
@@ -325,8 +359,11 @@ def plot(list_hof,param):
     plt.figure()
     df.plot()
     plt.title(param)
+    plt.show()
 
 def plotData(number):
+    """Plot the sequences from the dataset
+    """
     df = pd.DataFrame(sessions[0])
     
     for i in range(number):
@@ -335,6 +372,7 @@ def plotData(number):
     plt.figure()
     df.plot(legend=False)
     plt.title('Dataset')
+    plt.show()
     
     
 # =============================================================================
