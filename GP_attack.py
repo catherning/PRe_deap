@@ -34,6 +34,7 @@ NB_NEIGHBORS=3
 MAX_ACTIONS=100
 MIN_ACTIONS=6
 
+# By convention,
 # 1 logon
 # 2 logoff
 # 3 connect
@@ -60,28 +61,24 @@ def daysSeq(list_actions):
     dates=[]
     
     def activity(act):
-        if act['type']==actions[0]:
-            
+        if act['type']==actions[0]:      
             if act['activity']=='Logon':
                 sequence.append(1)
             else:
                 sequence.append(2)
-        elif act['type']==actions[2]:
-            
+        elif act['type']==actions[2]:        
             if act['activity']=='WWW Download':
                 sequence.append(5)
             elif act['activity']=='WWW Upload':
                 sequence.append(6)
             else:
                 sequence.append(7)
-        elif act['type']==actions[3]:
-            
+        elif act['type']==actions[3]:       
             if act['activity']=='Connect':
                 sequence.append(3)
             else:
                 sequence.append(4)
-        elif act['type']==actions[4]:
-            
+        elif act['type']==actions[4]:        
             if act['activity']=='File Open':
                 sequence.append(10)
             elif act['activity']=='File Write':
@@ -292,7 +289,8 @@ toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter('height'), max
 # =============================================================================
 
 def main(rand,size,cxpb,mutpb,ngen,param):
-    """main executes one run of the GP and print the results.
+    """
+    main executes one run of the GP and print the results.
     """
     random.seed(rand)
     list_results=[rand]
@@ -318,6 +316,7 @@ def main(rand,size,cxpb,mutpb,ngen,param):
 #    stats.register("min", numpy.min)
     stats.register("max", numpy.max)
 
+    # Run of the GP
     p,logbook=algorithms.eaSimple(pop, toolbox, cxpb, mutpb, ngen, stats, halloffame=hof,verbose=0)
     
     
@@ -340,7 +339,7 @@ def main(rand,size,cxpb,mutpb,ngen,param):
             if mini>dist:
                 mini=dist
                 close_seq=seq
-    if mini<0.4:   
+    if mini<0.3:   
         print ("{0}   {1}   {2}   {3}   {4}   {5}".format(round(list_results[0],3),round(list_results[1],3),list_results[2],mini,toolbox.compile(expr=hof[0]),close_seq))
     else:
         print ("{0}   {1}   {2}".format(round(list_results[0],3),round(list_results[1],3),list_results[2]))
@@ -381,6 +380,7 @@ if __name__ == "__main__":
 
     NB_SIMU=10
     
+    # The initial parameters
     rand=69
     size=90
     ngen = 50
@@ -391,6 +391,7 @@ if __name__ == "__main__":
     
     plotData(30)
     
+    # It will makes NB_SIMU runs for each parameter
     for param in param_list:
         print("\n")
         list_hof=[]
@@ -442,6 +443,7 @@ if __name__ == "__main__":
                 dico_hof[round(mutpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
                 list_hof.append(dico_hof)
 
+#TODO
 #        elif param=="optimal":
 #            NB_SIMU=50
 #            mu=27

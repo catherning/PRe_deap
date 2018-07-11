@@ -230,7 +230,7 @@ if __name__ == "__main__":
     
     NB_SIMU=10
     
-    #The initial parameters    
+    # The initial parameters    
     rand=69
     ngen = 100
     mu = 50
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     
     param_list=["original","rand","mu","lamb","cross","mutate"] #"optimal"
     
-    #It will makes NB_SIMU runs for each parameter
+    # It will makes NB_SIMU runs for each parameter
     for param in param_list:
         print("\n")
         list_hof=[]
@@ -290,6 +290,7 @@ if __name__ == "__main__":
                 pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb+i*pb_pace,ngen,param)
                 list_hof.append([round(mutpb+i*pb_pace,3)]+[hof[0][0]]+list(hof[0][2:]))
 
+#TODO
         elif param=="optimal":
             NB_SIMU=50
             mu=27

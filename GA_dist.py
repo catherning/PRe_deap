@@ -149,9 +149,7 @@ def fitness(ind):
         inter=len(a&b)
         jaccard=inter/(len(a)+len(b)-inter)
         return jaccard
-    
-
-    
+   
     def Cosine(answer,ind):
         a=[0]*14
         b=[0]*14
@@ -178,7 +176,6 @@ def fitness(ind):
         if mini>fit:
             mini=fit
             
-
     return fit,
 
 def mutList(individual):
@@ -197,6 +194,9 @@ def mutList(individual):
 
 
 def main(rand,mu,lamb,cxpb,mutpb,ngen):
+    """
+    main executes one run of the GP and print the results.
+    """
     random.seed(rand)
     NGEN = ngen
     MU = mu
@@ -217,10 +217,11 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     stats.register("min", numpy.min, axis=0)
     stats.register("max", numpy.max, axis=0)
 
+    # Run of the GA
     p,logbook=algorithms.eaMuPlusLambda(pop, toolbox, MU, LAMBDA, CXPB, MUTPB, NGEN, stats,
                               halloffame=hof,verbose=0)
     
-    
+    # Takes the minimum fitness of the population from all of the runs
     min_fit=1000
     min_gen=0
     for elt in logbook:
