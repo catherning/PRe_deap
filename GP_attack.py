@@ -25,7 +25,7 @@ actions=["l","e","h","d","f"]
 
 # You can choose the user from the dataset : from list_users or from attackers
 user=list_users[12]
-usr=attackers[0]
+usr=attackers[GA_dist.scenarioNB]
 user=usr+".csv" #first insider attacker
 user_file=open(path+user)
 
@@ -166,7 +166,7 @@ def if_then_else(left,right,out1,out2):
     else:
         return left+out2
 
-
+ 
 
 # =============================================================================
  
@@ -332,15 +332,15 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     
     #Calculates the shortest distance to the real attacks
     mini=10
-    close_seq=[]
     for ind in hof:
         for seq in GA_dist.attackAnswer:
             dist=Cosine(seq,toolbox.compile(expr=ind))
             if mini>dist:
                 mini=dist
                 close_seq=seq
+                ind_hof=ind
     if mini<0.3:   
-        print ("{0}   {1}   {2}   {3}   {4}   {5}".format(round(list_results[0],3),round(list_results[1],3),list_results[2],mini,toolbox.compile(expr=hof[0]),close_seq))
+        print ("{0}   {1}   {2}   {3}   {4}   {5}".format(round(list_results[0],3),round(list_results[1],3),list_results[2],close_seq,mini,toolbox.compile(expr=ind_hof)))
     else:
         print ("{0}   {1}   {2}".format(round(list_results[0],3),round(list_results[1],3),list_results[2]))
 

@@ -127,8 +127,6 @@ list_actions.sort(key=lambda r: r["date"])
 
 # Creates a dictionary of the sequences, might be useless
 session_date,sessions=daysVector(list_actions)
-for a in sessions:
-    print(a)
 dico_session={}
 for i in range(len(sessions)):
     dico_session[session_date[i]]=sessions[i]
