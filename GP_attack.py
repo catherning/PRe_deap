@@ -25,7 +25,7 @@ actions=["l","e","h","d","f"]
 
 # You can choose the user from the dataset : from list_users or from attackers
 user=list_users[12]
-usr=attackers[GA_dist.scenarioNB]
+usr=attackers[GA_dist.scenarioNB-1]
 user=usr+".csv" #first insider attacker
 user_file=open(path+user)
 
@@ -134,24 +134,40 @@ for i in range(len(sessions)):
 ### Function set
 
 def add(left,right):
-    left[len(left)-1]=(left[len(left)-1]+right[0])%NB_ACTIONS+1 #+1 bc there's no action numbered 0, but it's by convention
+    left[-1]=(left[len(left)-1]+right[0])%NB_ACTIONS+1 #+1 bc there's no action numbered 0, but it's by convention
     return left
 
 def sub(left,right):
-    left[len(left)-1]=(left[len(left)-1]-right[0])%NB_ACTIONS+1
+    left[-1]=(left[len(left)-1]-right[0])%NB_ACTIONS+1
     return left
 
 def mul(left,right):
-    left[len(left)-1]=(left[len(left)-1]*right[0])%NB_ACTIONS+1
+    left[-1]=(left[len(left)-1]*right[0])%NB_ACTIONS+1
     return left
 
 def div(left, right):
     try:
-     left[len(left)-1]= (left[len(left)-1] // right[0])%NB_ACTIONS +1
+     left[-1]= (left[len(left)-1] // right[0])%NB_ACTIONS +1
      return left
     except ZeroDivisionError:
         left[len(left)-1]=1
         return left
+
+def addOneAll(left):
+    for i in range(len(left)):
+        if left[i]==12:
+            left[i]=13
+        else:          
+            left[i]=(left[i]+1)%NB_ACTIONS
+    return left
+
+def subOneAll(left):
+    for i in range(len(left)):
+        if left[i]==1:
+            left[i]=13
+        else:          
+            left[i]=left[i]-1
+    return left
 
 def concatenate(left,right):
     return left+right
@@ -254,6 +270,8 @@ pset.addPrimitive(add, 2)
 pset.addPrimitive(sub, 2)
 pset.addPrimitive(mul, 2)
 pset.addPrimitive(div, 2)
+#pset.addPrimitive(addOneAll, 1)
+#pset.addPrimitive(subOneAll, 1)
 pset.addPrimitive(concatenate, 2)
 pset.addPrimitive(repeat, 1)
 pset.addPrimitive(if_then_else, 4)
