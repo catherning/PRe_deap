@@ -376,6 +376,8 @@ def plot(list_hof,param):
     plt.figure()
     df.plot()
     plt.title(param)
+    name='Graphs_GP/'+str(GA_dist.scenarioNB)+'_'+param+'.png'
+    plt.savefig(name)
     plt.show()
 
 def plotData(number):
@@ -396,7 +398,7 @@ def plotData(number):
 
 if __name__ == "__main__":
 
-    NB_SIMU=10
+    NB_SIMU=5
     
     # The initial parameters
     rand=69

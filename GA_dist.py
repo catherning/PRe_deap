@@ -123,7 +123,7 @@ def scenario(number):
     return date,days
 
 #scenarioNB=int(input('Choose the scenario number to train for (1-5): '))
-scenarioNB=5
+scenarioNB=3
 date,attackAnswer=scenario(scenarioNB)
 print('The scenario '+str(scenarioNB)+' is the sequence:')
 for session in attackAnswer:
