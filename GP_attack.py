@@ -6,9 +6,11 @@ from deap import gp
 
 #import operator
 import os
+import csv
 import kNN
 import random
 import time
+from datetime import datetime
 import numpy
 from math import sqrt
 import operator
@@ -19,6 +21,8 @@ import GA_dist
 NB_ACTIONS=13
 # To change accordingly
 path='D:/r6.2/users/'
+results_path='Results_GP/Scen_'+str(GA_dist.scenarioNB)+'_'+datetime.now().strftime('%m-%d-%H-%M-%S')+'/'
+os.makedirs(results_path)
 list_users=os.listdir(path)
 attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 actions=["l","e","h","d","f"]
@@ -270,8 +274,8 @@ pset.addPrimitive(add, 2)
 pset.addPrimitive(sub, 2)
 pset.addPrimitive(mul, 2)
 pset.addPrimitive(div, 2)
-#pset.addPrimitive(addOneAll, 1)
-#pset.addPrimitive(subOneAll, 1)
+pset.addPrimitive(addOneAll, 1)
+pset.addPrimitive(subOneAll, 1)
 pset.addPrimitive(concatenate, 2)
 pset.addPrimitive(repeat, 1)
 pset.addPrimitive(if_then_else, 4)
@@ -285,7 +289,7 @@ creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 toolbox = base.Toolbox()
 
 # Attribute generator
-toolbox.register("expr_init", gp.genFull, pset=pset, min_=4, max_=6)
+toolbox.register("expr_init", gp.genFull, pset=pset, min_=5, max_=7)
 
 # Structure initializers
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
@@ -306,7 +310,7 @@ toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter('height'), max
 
 # =============================================================================
 
-def main(rand,size,cxpb,mutpb,ngen,param):
+def main(rand,size,cxpb,mutpb,ngen,param,current_out_writer):
     """
     main executes one run of the GP and print the results.
     """
@@ -361,8 +365,9 @@ def main(rand,size,cxpb,mutpb,ngen,param):
         print ("{0}   {1}   {2}   {3}   {4}   {5}".format(round(list_results[0],3),round(list_results[1],3),list_results[2],close_seq,mini,toolbox.compile(expr=ind_hof)))
     else:
         print ("{0}   {1}   {2}".format(round(list_results[0],3),round(list_results[1],3),list_results[2]))
+    current_out_writer.writerow([round(list_results[0],3),round(list_results[1],3),list_results[2],close_seq,mini,toolbox.compile(expr=ind_hof)])
 
-    return hof
+    return ind_hof
 
 
 def plot(list_hof,param):
@@ -376,7 +381,7 @@ def plot(list_hof,param):
     plt.figure()
     df.plot()
     plt.title(param)
-    name='Graphs_GP/'+str(GA_dist.scenarioNB)+'_'+param+'.png'
+    name=results_path+param+'.png'
     plt.savefig(name)
     plt.show()
 
@@ -417,50 +422,61 @@ if __name__ == "__main__":
         list_hof=[]
         
         if param=="original":
+            current_out_writer = csv.writer(open(results_path+param+'.csv', 'w', newline=''), delimiter=',')
+            current_out_writer.writerow([param,'Avg_max_fit','Gen','Dataset','CosDist','Hof'])
             dico_hof={}
-            hof=main(rand,size,cxpb,mutpb,ngen,param)
-            dico_hof['original']=toolbox.compile(expr=hof[0]) 
+            hof=main(rand,size,cxpb,mutpb,ngen,param,current_out_writer)
+            dico_hof['original']=toolbox.compile(expr=hof) 
             list_hof=[dico_hof]
             
         if param=="rand":
             print ("Rand   Max_fit   Gen")
+            current_out_writer = csv.writer(open(results_path+param+'.csv', 'w', newline=''), delimiter=',')
+            current_out_writer.writerow([param,'Avg_max_fit','Gen','Dataset','CosDist','Hof'])
             for i in range (NB_SIMU):
                 dico_hof={}
                 rand=int(time.clock()*10)
-                hof=main(rand,size,cxpb,mutpb,ngen,param)
-                dico_hof[rand]=toolbox.compile(expr=hof[0]) 
+                hof=main(rand,size,cxpb,mutpb,ngen,param,current_out_writer)
+                dico_hof[rand]=toolbox.compile(expr=hof) 
                 list_hof.append(dico_hof)
+            
                 
         elif param=="size":
             print ("Size   Max_fit   Gen")
             size=80
+            current_out_writer = csv.writer(open(results_path+param+'.csv', 'w', newline=''), delimiter=',')
+            current_out_writer.writerow([param,'Avg_max_fit','Gen','Dataset','CosDist','Hof'])
             for i in range (NB_SIMU):  
                 rand=int(time.clock()*10)
                 dico_hof={}
-                hof=main(rand,size+i,cxpb,mutpb,ngen,param)
-                dico_hof[size+i]=toolbox.compile(expr=hof[0]) 
+                hof=main(rand,size+i,cxpb,mutpb,ngen,param,current_out_writer)
+                dico_hof[size+i]=toolbox.compile(expr=hof) 
                 list_hof.append(dico_hof)
      
         elif param=="cross":
             print ("CrossProba   Max_fit   Gen")
             NB_SIMU=int((1-mutpb)/pb_pace)
             cxpb=0
+            current_out_writer = csv.writer(open(results_path+param+'.csv', 'w', newline=''), delimiter=',')
+            current_out_writer.writerow([param,'Avg_max_fit','Gen','Dataset','CosDist','Hof'])
             for i in range (NB_SIMU):   
                 rand=int(time.clock()*10)
                 dico_hof={}
-                hof=main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param)
-                dico_hof[round(cxpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
+                hof=main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param,current_out_writer)
+                dico_hof[round(cxpb+i*pb_pace,3)]=toolbox.compile(expr=hof)
                 list_hof.append(dico_hof)
                   
         elif param=="mutate":
             NB_SIMU=int((1-cxpb)/pb_pace)
             print ("MutPb   Max_fit   Gen")
             mutpb=0
+            current_out_writer = csv.writer(open(results_path+param+'.csv', 'w', newline=''), delimiter=',')
+            current_out_writer.writerow([param,'Avg_max_fit','Gen','Dataset','CosDist','Hof'])
             for i in range (NB_SIMU):  
                 rand=int(time.clock()*10)
                 dico_hof={}
-                hof=main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param)
-                dico_hof[round(mutpb+i*pb_pace,3)]=toolbox.compile(expr=hof[0])
+                hof=main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param,current_out_writer)
+                dico_hof[round(mutpb+i*pb_pace,3)]=toolbox.compile(expr=hof)
                 list_hof.append(dico_hof)
 
 #TODO

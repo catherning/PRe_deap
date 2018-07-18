@@ -3,7 +3,7 @@ from datetime import date,datetime
 from sklearn.neighbors import NearestNeighbors
 
 import numpy as np
-from GA_dist import scenarioNB
+#from GA_dist import scenarioNB
 
 path='D:/r6.2/users/'
 list_users=os.listdir(path)
@@ -11,7 +11,7 @@ attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 
 # You can choose the user from the dataset : from list_users or from attackers
 #user=list_users[2]
-usr=attackers[scenarioNB-1]
+usr=attackers[4]
 user=usr+".csv" #first insider attacker
 user_file=open(path+user)
 NB_NEIGHBORS=3

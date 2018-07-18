@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jun  8 13:30:09 2018
-
-@author: cx10
-"""
 #from https://gist.github.com/jrivero/1085501
 
 import os
@@ -59,8 +53,8 @@ def split(action, delimiter=',', row_limit=10000,
             current_out_writer.writerow(row[1:(len(row)-1)])
             
 path='D:/r6.2/'
-#list_actions=['device','file','logon','email','http']
-list_actions=['http']
+list_actions=['device','file','logon','email','http']
+#list_actions=['http']
 #file=open(path+'http.csv')
 #for i,line in enumerate(file):
 #    if i<3:
@@ -73,4 +67,4 @@ for action in list_actions:
     nb_row=50000
     if action=='http':
         nb_row=400000
-    split(action,row_limit=nb_row,output_name_template=action+'_%s.csv',output_path=path+'splittedHTTP/',keep_headers=False)
+    split(action,row_limit=nb_row,output_name_template=action+'_%s.csv',output_path=path+'splitted/',keep_headers=False)
