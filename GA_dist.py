@@ -106,14 +106,18 @@ def scenario(number):
             action=data[0]
             
             if beginning!=data[2].date():
-                date.append(beginning)               
-                beginning=data[2].date()
+                #if sequence not in days:
+                date.append(beginning)
                 days.append(sequence)
+                
+                beginning=data[2].date()
                 sequence=[]
                 activity(action)
                 
             elif data==last:
+                
                 activity(action)
+                #if sequence not in days:
                 date.append(beginning)
                 days.append(sequence) 
             
@@ -123,7 +127,7 @@ def scenario(number):
     return date,days
 
 #scenarioNB=int(input('Choose the scenario number to train for (1-5): '))
-scenarioNB=3
+scenarioNB=5
 date,attackAnswer=scenario(scenarioNB)
 print('The scenario '+str(scenarioNB)+' is the sequence:')
 for session in attackAnswer:
