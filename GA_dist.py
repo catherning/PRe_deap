@@ -9,6 +9,8 @@ import time
 from datetime import datetime
 import os
 import distance as d
+import matplotlib.pyplot as plt
+import pandas as pd
 
 # To assure reproductibility, the RNG seed is set prior to the items
 # dict initialization. It is also seeded in main().
@@ -128,7 +130,7 @@ def scenario(number):
     return date,days
 
 #scenarioNB=int(input('Choose the scenario number to train for (1-5): '))
-scenarioNB=3
+scenarioNB=5
 date,attackAnswer=scenario(scenarioNB)
 print('The scenario '+str(scenarioNB)+' is the sequence:')
 for session in attackAnswer:
@@ -138,6 +140,7 @@ IND_INIT_SIZE = min(map(len, attackAnswer))-1
 MAX_ACTIONS = max(map(len, attackAnswer))+7
 
 # =============================================================================
+distfunc=d.damerauLevenshteinHomerDistance
 
 def fitness(ind):
  
@@ -146,11 +149,11 @@ def fitness(ind):
     elif len(ind)<=1:
         return 1000,
     
-    #fit=distanceLevenshtein(attackAnswer,len(attackAnswer),ind,len(ind))
-    #coef=Jaccard(attackAnswer,ind)
+
     maxi=0
     for attack in attackAnswer:
-        fit=d.Cosine(attack,ind)
+        #fit=d.Cosine(attack,ind)
+        fit=distfunc(attack,ind)
         if maxi<fit:
             maxi=fit
             
@@ -168,10 +171,23 @@ def mutList(individual):
     return individual,
 
 # =============================================================================
+def plot(list_hof,param):
+    """Plot the results as a broken line for one sequence
+    """
+    df = pd.DataFrame(list_hof[0])
+    if param!='original':
+        for i in range(len(list_hof)):
+            additional=pd.DataFrame(list_hof[i])
+            df = pd.concat([df, additional], axis=1)
+    plt.figure()
+    df.plot()
+    plt.title(param)
+    name=results_path+param+'.png'
+    plt.savefig(name)
+    plt.show()
 
 
-
-def main(rand,mu,lamb,cxpb,mutpb,ngen):
+def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     """
     main executes one run of the GP and print the results.
     """
@@ -182,7 +198,18 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     CXPB = cxpb
     MUTPB = mutpb
     
-    list_results=[rand]
+    if param=="rand" or param=="optimal":
+        list_results=[rand]
+    elif param=="mu":
+        list_results=[mu]
+    elif param=="lamb":
+        list_results=[lamb]
+    elif param=="cross":
+        list_results=[cxpb]
+    elif param=="mutate":
+        list_results=[mutpb]
+    elif param=="original":
+        list_results=[0]
     
     pop = toolbox.population(n=MU)
 #    for ind in pop:
@@ -198,7 +225,14 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     # Run of the GA
     p,logbook=algorithms.eaMuPlusLambda(pop, toolbox, MU, LAMBDA, CXPB, MUTPB, NGEN, stats,
                               halloffame=hof,verbose=0)
-    
+        
+    with open(results_path+param+'_logbook.csv', 'a',newline='') as f:
+        w = csv.DictWriter(f, logbook[0].keys())
+        w.writeheader()
+        for el in logbook:
+            w.writerow(el)
+        w.writerow({})
+        
     # Takes the minimum fitness of the population from all of the runs
     min_fit=1000
     min_gen=0
@@ -223,7 +257,7 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
     print ("{0}   {1}   {2}   {3}   {4}   {5}".format(list_results[0],round(list_results[1],3),list_results[2],close_seq,round(mini,3),ind_hof))
     current_out_writer.writerow([list_results[0],list_results[1],list_results[2],close_seq,mini,ind_hof])
 
-    return pop, stats, hof
+    return ind_hof
 
 # =============================================================================
     
@@ -250,31 +284,90 @@ if __name__ == "__main__":
 
   
     NB_SIMU=10
-    ngen = 50
+    ngen = 70
     mu = 70
     lamb = 100
     cxpb = 0.7
     mutpb = 0.2
-    pb_pace=0.02
-    param='rand'
+    pb_pace=0.1
+    param_list=["rand",'mu','lamb',"cross","mutate"] #"optimal"   "original",
+
+    #param='rand'
     
         
     results_path='Results_GA_dist/Scen_'+str(scenarioNB)+'_'+datetime.now().strftime('%m-%d-%H-%M-%S')+'/'
     os.makedirs(results_path)
     
     # Saves the parameters and function set in the file parameters.csv
-    current_out_writer = csv.writer(open(results_path+'parameters.csv', 'w', newline=''), delimiter=',')
-    current_out_writer.writerow(['rand','ngen','mu','lambda','cxpb','mutpb','pb_pace',])
-    current_out_writer.writerow([rand,ngen,mu,lamb,cxpb,mutpb,pb_pace,])
-    current_out_writer.writerow([toolbox.select.__name__,toolbox.select.func.__name__])
-    current_out_writer.writerow([toolbox.mate.__name__,toolbox.mate.func.__name__])
-    current_out_writer.writerow([toolbox.mutate.__name__,toolbox.mutate.func.__name__])
+    with open(results_path+'parameters.csv', 'w', newline='') as csv_param:
+        current_out_writer=csv.writer(csv_param, delimiter=',')
+        current_out_writer.writerow(['rand','ngen','mu','lambda','cxpb','mutpb','pb_pace',])
+        current_out_writer.writerow([rand,ngen,mu,lamb,cxpb,mutpb,pb_pace,])
+        current_out_writer.writerow([toolbox.select.__name__,toolbox.select.func.__name__])
+        current_out_writer.writerow([toolbox.mate.__name__,toolbox.mate.func.__name__])
+        current_out_writer.writerow([toolbox.mutate.__name__,toolbox.mutate.func.__name__])
+        current_out_writer.writerow(['dist for fitness',distfunc.__name__])
 
-    
-    
-    print ("Rand   Min_fit   Gen")
-    for i in range(NB_SIMU):
-        rand=int(time.clock()*10)
-        current_out_writer = csv.writer(open(results_path+param+'.csv', 'w', newline=''), delimiter=',')
+
+        # It will makes NB_SIMU runs for each parameter
+    for param in param_list:
+        print("\n")
+        list_hof=[]
+        
+        csv_file=open(results_path+param+'.csv','w', newline='')
+        
+        current_out_writer = csv.writer(csv_file, delimiter=',')
         current_out_writer.writerow([param,'Max_fit','Gen','Dataset','Dist','Hof'])
-        main(rand,mu,lamb,cxpb,mutpb,ngen)
+        
+        if param=='rand':
+            print ("Rand   Min_fit   Gen")
+            for i in range(NB_SIMU):
+                rand=int(time.clock()*10)
+                dico_hof={}
+                hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+                dico_hof[rand]=hof
+                list_hof.append(dico_hof)
+        
+        elif param=="mu":
+            print ("Mu   Max_fit   Gen")
+            mu=60    
+            for i in range (NB_SIMU):  
+                rand=int(time.clock()*10)
+                dico_hof={}
+                hof=main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)
+                dico_hof[mu+i]=hof
+                list_hof.append(dico_hof)
+        elif param=="lamb":
+            print ("Lamb   Max_fit   Gen")
+            mu=60    
+            for i in range (NB_SIMU):  
+                rand=int(time.clock()*10)
+                dico_hof={}
+                hof=main(rand,mu,lamb+i,cxpb,mutpb,ngen,param)
+                dico_hof[lamb+i]=hof
+                list_hof.append(dico_hof)
+     
+        elif param=="cross":
+            print ("Crosspb   Max_fit   Gen")
+            NB_SIMU=int((1-mutpb)/pb_pace)
+            cxpb=0
+            for i in range (NB_SIMU):   
+                rand=int(time.clock()*10)
+                dico_hof={}
+                hof=main(rand,mu,lamb,cxpb+i*pb_pace,mutpb,ngen,param)
+                dico_hof[round(cxpb+i*pb_pace,3)]=hof
+                list_hof.append(dico_hof)
+                  
+        elif param=="mutate":
+            NB_SIMU=int((1-cxpb)/pb_pace)
+            print ("MutPb   Max_fit   Gen")
+            mutpb=0
+            for i in range (NB_SIMU):  
+                rand=int(time.clock()*10)
+                dico_hof={}
+                hof=main(rand,mu,lamb,cxpb,mutpb+i*pb_pace,ngen,param)
+                dico_hof[round(mutpb+i*pb_pace,3)]=hof
+                list_hof.append(dico_hof)
+        
+        csv_file.close()
+        plot(list_hof,param)

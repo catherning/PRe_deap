@@ -16,6 +16,7 @@ import distance as d
 import operator
 import matplotlib.pyplot as plt
 import pandas as pd
+
 import GA_dist
 
 NB_ACTIONS=13
@@ -124,6 +125,7 @@ for line in user_file:
     data=line.split(',')
     activity=kNN.action(data)
     list_actions.append(activity)
+user_file.close()
     
 # Sort the sequences by date of action 
 list_actions.sort(key=lambda r: r["date"])   
@@ -313,10 +315,9 @@ def main(rand,size,cxpb,mutpb,ngen,param,current_out_writer):
         print ("{0}   {1}   {2}   {3}   {4}   {5}".format(round(list_results[0],3),round(list_results[1],3),list_results[2],close_seq,mini,toolbox.compile(expr=ind_hof)))
     else:
         print ("{0}   {1}   {2}".format(round(list_results[0],3),round(list_results[1],3),list_results[2]))
-    current_out_writer.writerow([round(list_results[0],3),round(list_results[1],3),list_results[2],close_seq,mini,ind_hof,toolbox.compile(expr=ind_hof)])
+    current_out_writer.writerow([list_results[0],list_results[1],list_results[2],close_seq,mini,ind_hof,toolbox.compile(expr=ind_hof)])
 
     return ind_hof
-
 
 def plot(list_hof,param):
     """Plot the results as a broken line for one sequence
@@ -331,7 +332,7 @@ def plot(list_hof,param):
     plt.title(param)
     name=results_path+param+'.png'
     plt.savefig(name)
-    plt.show()
+    plt.show() 
 
 def plotData(number):
     """Plot the sequences from the dataset
@@ -365,14 +366,15 @@ if __name__ == "__main__":
     plotData(30)
     
     # Saves the parameters and function set in the file parameters.csv
-    current_out_writer = csv.writer(open(results_path+'parameters.csv', 'w', newline=''), delimiter=',')
-    current_out_writer.writerow(['rand','size','ngen','cxpb','mutpb','pb_pace',])
-    current_out_writer.writerow([rand,size,ngen,cxpb,mutpb,pb_pace,])
-    current_out_writer.writerow(['function set']+[prim.name for prim in list(pset.primitives.values())[0]])
-    current_out_writer.writerow([toolbox.select.__name__,toolbox.select.func.__name__])
-    current_out_writer.writerow([toolbox.mate.__name__,toolbox.mate.func.__name__])
-    current_out_writer.writerow([toolbox.mutate.__name__,toolbox.mutate.func.__name__])
-    current_out_writer.writerow([toolbox.expr_init.__name__,toolbox.expr_init.func.__name__,'min',toolbox.expr_init.keywords['min_'],'max',toolbox.expr_init.keywords['max_']])
+    with open(results_path+'parameters.csv', 'w', newline='') as csv_param:
+        current_out_writer=csv.writer(csv_param, delimiter=',')
+        current_out_writer.writerow(['rand','size','ngen','cxpb','mutpb','pb_pace',])
+        current_out_writer.writerow([rand,size,ngen,cxpb,mutpb,pb_pace,])
+        current_out_writer.writerow(['function set']+[prim.name for prim in list(pset.primitives.values())[0]])
+        current_out_writer.writerow([toolbox.select.__name__,toolbox.select.func.__name__])
+        current_out_writer.writerow([toolbox.mate.__name__,toolbox.mate.func.__name__])
+        current_out_writer.writerow([toolbox.mutate.__name__,toolbox.mutate.func.__name__])
+        current_out_writer.writerow([toolbox.expr_init.__name__,toolbox.expr_init.func.__name__,'min',toolbox.expr_init.keywords['min_'],'max',toolbox.expr_init.keywords['max_']])
     
     
     
@@ -381,10 +383,11 @@ if __name__ == "__main__":
     for param in param_list:
         print("\n")
         list_hof=[]
+        csv_file=open(results_path+param+'.csv', 'w', newline='')
+        current_out_writer = csv.writer(csv_file, delimiter=',')
+        current_out_writer.writerow([param,'Avg_max_fit','Gen','Dataset','CosDist','Hof'])
         
-        if param=="original":
-            current_out_writer = csv.writer(open(results_path+param+'.csv', 'w', newline=''), delimiter=',')
-            current_out_writer.writerow([param,'Avg_max_fit','Gen','Dataset','CosDist','Hof'])
+        if param=="original":       
             dico_hof={}
             hof=main(rand,size,cxpb,mutpb,ngen,param,current_out_writer)
             dico_hof['original']=toolbox.compile(expr=hof) 
@@ -392,8 +395,6 @@ if __name__ == "__main__":
             
         if param=="rand":
             print ("Rand   Max_fit   Gen")
-            current_out_writer = csv.writer(open(results_path+param+'.csv', 'w', newline=''), delimiter=',')
-            current_out_writer.writerow([param,'Avg_max_fit','Gen','Dataset','CosDist','Hof'])
             for i in range (NB_SIMU):
                 dico_hof={}
                 rand=int(time.clock()*10)
@@ -401,12 +402,9 @@ if __name__ == "__main__":
                 dico_hof[rand]=toolbox.compile(expr=hof) 
                 list_hof.append(dico_hof)
             
-                
         elif param=="size":
             print ("Size   Max_fit   Gen")
             size=80
-            current_out_writer = csv.writer(open(results_path+param+'.csv', 'w', newline=''), delimiter=',')
-            current_out_writer.writerow([param,'Avg_max_fit','Gen','Dataset','CosDist','Hof'])
             for i in range (NB_SIMU):  
                 rand=int(time.clock()*10)
                 dico_hof={}
@@ -418,8 +416,6 @@ if __name__ == "__main__":
             print ("CrossProba   Max_fit   Gen")
             NB_SIMU=int((1-mutpb)/pb_pace)
             cxpb=0
-            current_out_writer = csv.writer(open(results_path+param+'.csv', 'w', newline=''), delimiter=',')
-            current_out_writer.writerow([param,'Avg_max_fit','Gen','Dataset','CosDist','Hof'])
             for i in range (NB_SIMU):   
                 rand=int(time.clock()*10)
                 dico_hof={}
@@ -431,7 +427,7 @@ if __name__ == "__main__":
             NB_SIMU=int((1-cxpb)/pb_pace)
             print ("MutPb   Max_fit   Gen")
             mutpb=0
-            current_out_writer = csv.writer(open(results_path+param+'.csv', 'w', newline=''), delimiter=',')
+            current_out_writer = csv.writer(csv_file, delimiter=',')
             current_out_writer.writerow([param,'Avg_max_fit','Gen','Dataset','CosDist','Hof'])
             for i in range (NB_SIMU):  
                 rand=int(time.clock()*10)
@@ -451,5 +447,5 @@ if __name__ == "__main__":
 #            for i in range (NB_SIMU):
 #                rand=int(time.clock()*10)
 #                pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
-        
+        csv_file.close()
         plot(list_hof,param)
