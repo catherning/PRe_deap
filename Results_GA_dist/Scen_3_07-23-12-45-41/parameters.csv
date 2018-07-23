@@ -1,0 +1,5 @@
+rand,ngen,mu,lambda,cxpb,mutpb,pb_pace
+65,30,70,100,0.7,0.2,0.02
+select,selNSGA2
+mate,cxTwoPoint
+mutate,mutList

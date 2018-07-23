@@ -2,17 +2,18 @@ from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
-from math import sqrt
 
 import random
 import numpy
 import time
 from datetime import datetime
 import os
+import distance as d
 
 # To assure reproductibility, the RNG seed is set prior to the items
 # dict initialization. It is also seeded in main().
-random.seed(65)
+rand=65
+random.seed(rand)
 import csv
 
 #List of users id
@@ -127,46 +128,19 @@ def scenario(number):
     return date,days
 
 #scenarioNB=int(input('Choose the scenario number to train for (1-5): '))
-scenarioNB=5
+scenarioNB=3
 date,attackAnswer=scenario(scenarioNB)
 print('The scenario '+str(scenarioNB)+' is the sequence:')
 for session in attackAnswer:
     print(session)
-IND_INIT_SIZE = min(map(len, attackAnswer))
-MAX_ACTIONS = max(map(len, attackAnswer))+5
+
+IND_INIT_SIZE = min(map(len, attackAnswer))-1
+MAX_ACTIONS = max(map(len, attackAnswer))+7
 
 # =============================================================================
 
 def fitness(ind):
-    def distanceLevenshtein(answer,i,ind,j):
-        if min(i,j)==0:
-            return(max(i,j))
-        else:
-            a=distanceLevenshtein(answer,i-1,ind,j)+1
-            b=distanceLevenshtein(answer,i,ind,j-1)+1
-            c=distanceLevenshtein(answer,i-1,ind,j-1)+1*(answer[i-1]!=ind[j-1])
-            return min(a,b,c)
-
-    def Jaccard(answer,ind):
-        a=set(answer)
-        b=set(ind)
-        inter=len(a&b)
-        jaccard=inter/(len(a)+len(b)-inter)
-        return jaccard
-   
-    def Cosine(answer,ind):
-        a=[0]*14
-        b=[0]*14
-        for elt in answer:
-            a[elt]+=1
-        for elt in ind:
-            #print(elt)
-            b[elt]+=1
-        dot=sum(i[0] * i[1] for i in zip(a, b))
-        normA=sqrt(sum(i**2 for i in a))
-        normB=sqrt(sum(i**2 for i in b))
-        return (dot/(normA*normB))
-    
+ 
     if len(ind)>MAX_ACTIONS:
         return 1000,
     elif len(ind)<=1:
@@ -174,13 +148,13 @@ def fitness(ind):
     
     #fit=distanceLevenshtein(attackAnswer,len(attackAnswer),ind,len(ind))
     #coef=Jaccard(attackAnswer,ind)
-    mini=1000
+    maxi=0
     for attack in attackAnswer:
-        fit=1-Cosine(attack,ind)
-        if mini>fit:
-            mini=fit
+        fit=d.Cosine(attack,ind)
+        if maxi<fit:
+            maxi=fit
             
-    return fit,
+    return maxi,
 
 def mutList(individual):
     """Mutation that pops or add an element.
@@ -234,10 +208,21 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen):
             min_gen=elt['gen']
     list_results.append(min_fit)
     list_results.append(min_gen)
-
-
-    print ("{0}     {1}    {2}   {3}".format(list_results[0],list_results[1],list_results[2],hof[0]))
     
+    #Calculates the shortest distance to the real attacks
+    mini=1
+    for ind in hof:
+        for seq in attackAnswer:
+            dist=d.Cosine(seq,ind)
+            if mini>dist:
+                mini=dist
+                close_seq=seq
+                ind_hof=ind
+
+
+    print ("{0}   {1}   {2}   {3}   {4}   {5}".format(list_results[0],round(list_results[1],3),list_results[2],close_seq,round(mini,3),ind_hof))
+    current_out_writer.writerow([list_results[0],list_results[1],list_results[2],close_seq,mini,ind_hof])
+
     return pop, stats, hof
 
 # =============================================================================
@@ -265,14 +250,31 @@ if __name__ == "__main__":
 
   
     NB_SIMU=10
-
-    ngen = 30
+    ngen = 50
     mu = 70
     lamb = 100
     cxpb = 0.7
     mutpb = 0.2
     pb_pace=0.02
+    param='rand'
+    
+        
+    results_path='Results_GA_dist/Scen_'+str(scenarioNB)+'_'+datetime.now().strftime('%m-%d-%H-%M-%S')+'/'
+    os.makedirs(results_path)
+    
+    # Saves the parameters and function set in the file parameters.csv
+    current_out_writer = csv.writer(open(results_path+'parameters.csv', 'w', newline=''), delimiter=',')
+    current_out_writer.writerow(['rand','ngen','mu','lambda','cxpb','mutpb','pb_pace',])
+    current_out_writer.writerow([rand,ngen,mu,lamb,cxpb,mutpb,pb_pace,])
+    current_out_writer.writerow([toolbox.select.__name__,toolbox.select.func.__name__])
+    current_out_writer.writerow([toolbox.mate.__name__,toolbox.mate.func.__name__])
+    current_out_writer.writerow([toolbox.mutate.__name__,toolbox.mutate.func.__name__])
+
+    
+    
     print ("Rand   Min_fit   Gen")
     for i in range(NB_SIMU):
         rand=int(time.clock()*10)
+        current_out_writer = csv.writer(open(results_path+param+'.csv', 'w', newline=''), delimiter=',')
+        current_out_writer.writerow([param,'Max_fit','Gen','Dataset','Dist','Hof'])
         main(rand,mu,lamb,cxpb,mutpb,ngen)

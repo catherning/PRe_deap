@@ -12,7 +12,7 @@ import random
 import time
 from datetime import datetime
 import numpy
-from math import sqrt
+import distance as d
 import operator
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -36,7 +36,7 @@ user_file=open(path+user)
 # You can change this parameter
 NB_NEIGHBORS=3
 MAX_ACTIONS=100
-MIN_ACTIONS=6
+MIN_ACTIONS=4
 
 # By convention,
 # 1 logon
@@ -190,82 +190,31 @@ def if_then_else(left,right,out1,out2):
 
 # =============================================================================
  
-def Cosine(dataseq,seq):
-    """
-    Calculate the Cosine distance between two sequences
-    """   
-    
-    a=[0]*14
-    b=[0]*14
-    for elt in dataseq:
-        a[elt]+=1
-    for elt in seq:
-        b[elt]+=1
-    dot=sum(i[0] * i[1] for i in zip(a, b))
-    normA=sqrt(sum(i**2 for i in a))
-    normB=sqrt(sum(i**2 for i in b))
-    return 1-(dot/(normA*normB))
-    
 
-# @author Michael Homer
-# http://mwh.geek.nz/2009/04/26/python-damerau-levenshtein-distance/
-# https://genepidgin.readthedocs.io/en/latest/compare.html
-def damerauLevenshteinHomerDistance(seq1, seq2):
-    """
-    Calculate the Damerau-Levenshtein distance between sequences.
 
-    This distance is the number of additions, deletions, substitutions,
-    and transpositions needed to transform the first sequence into the
-    second. Although generally used with strings, any sequences of
-    comparable objects will work.
-
-    Transpositions are exchanges of *consecutive* characters; all other
-    operations are self-explanatory.
-
-    This implementation is O(N*M) time and O(M) space, for N and M the
-    lengths of the two sequences.
-    """
-
-    oneago = None
-    thisrow = list(range(1, len(seq2) + 1)) + [0]
-    for x in range(len(seq1)):
-        # Python lists wrap around for negative indices, so put the
-        # leftmost column at the *end* of the list. This matches with
-        # the zero-indexed strings and saves extra calculation.
-        twoago, oneago, thisrow = oneago, thisrow, [0] * len(seq2) + [x + 1]
-        for y in range(len(seq2)):
-            delcost = oneago[y] + 1
-            addcost = thisrow[y - 1] + 1
-            subcost = oneago[y - 1] + (seq1[x] != seq2[y])
-            thisrow[y] = min(delcost, addcost, subcost)
-            # This block deals with transpositions
-            if (x > 0 and y > 0 and seq1[x] == seq2[y-1]
-              and seq1[x-1] == seq2[y] and seq1[x] != seq2[y]):
-                thisrow[y] = min(thisrow[y], twoago[y-2] + 1)
-    return thisrow[len(seq2) - 1]
-
-def distance(seq):
-    # Not wanted individuals
-    if len(seq)>MAX_ACTIONS or len(seq)<=MIN_ACTIONS:
-        return -1000
-    
+def distance(seq):    
     # Calculate the distance with 30 sequences from the dataset, we take the smallest one.
-    mini=1000
-    for i in range(30):
-        # You can choose which distance to use
-        new=damerauLevenshteinHomerDistance(sessions[i],seq)
-        #new=Cosine(sessions[i],seq)
-        if mini>new:
-            mini=new
+    dist_list=list(map(lambda p: d.damerauLevenshteinHomerDistance(p, seq), sessions[:30]))
+    mini=min(dist_list)
     return mini
+
+def distanceToAttack(seq):
+    dist_list=list(map(lambda p: d.damerauLevenshteinHomerDistance(p, seq), GA_dist.attackAnswer))
+    maxi=max(dist_list)
+    return maxi
 
 def fitness(individual):
     """
     Calculate the fitness of one individual by compiling it and calculating the smallest distance of the sequence to the dataset
     """
     seq = toolbox.compile(expr=individual)
+    # Not wanted individuals
+    if len(seq)>MAX_ACTIONS or len(seq)<=MIN_ACTIONS:
+        return -1000,1000
+    
     dist=distance(seq)
-    return dist,
+    distAttack=distanceToAttack(seq)
+    return dist,distAttack
 
 # =============================================================================
 # Create the functions used for the GP
@@ -283,14 +232,13 @@ pset.addPrimitive(if_then_else, 4)
 for i in range(1,14):
     pset.addTerminal([i])
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("FitnessMax", base.Fitness, weights=(1.0,-1.0))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
 
 # Attribute generator
-toolbox.register("expr_init", gp.genFull, pset=pset, min_=5, max_=7)
-
+toolbox.register("expr_init", gp.genFull, pset=pset, min_=3, max_=6)
 # Structure initializers
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -301,7 +249,7 @@ toolbox.register("evaluate", fitness)
 #DoubleTournament to limit tree size, but different arguments
 toolbox.register("select", tools.selTournament, tournsize=7)
 toolbox.register("mate", gp.cxOnePoint)
-toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
+toolbox.register("expr_mut", gp.genFull, min_=5, max_=7)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 #For controlling bloat
@@ -335,7 +283,7 @@ def main(rand,size,cxpb,mutpb,ngen,param,current_out_writer):
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
 #    stats.register("std", numpy.std)
-#    stats.register("min", numpy.min)
+    stats.register("min", numpy.min)
     stats.register("max", numpy.max)
 
     # Run of the GP
@@ -356,7 +304,7 @@ def main(rand,size,cxpb,mutpb,ngen,param,current_out_writer):
     mini=10
     for ind in hof:
         for seq in GA_dist.attackAnswer:
-            dist=Cosine(seq,toolbox.compile(expr=ind))
+            dist=d.Cosine(seq,toolbox.compile(expr=ind))
             if mini>dist:
                 mini=dist
                 close_seq=seq
@@ -365,7 +313,7 @@ def main(rand,size,cxpb,mutpb,ngen,param,current_out_writer):
         print ("{0}   {1}   {2}   {3}   {4}   {5}".format(round(list_results[0],3),round(list_results[1],3),list_results[2],close_seq,mini,toolbox.compile(expr=ind_hof)))
     else:
         print ("{0}   {1}   {2}".format(round(list_results[0],3),round(list_results[1],3),list_results[2]))
-    current_out_writer.writerow([round(list_results[0],3),round(list_results[1],3),list_results[2],close_seq,mini,toolbox.compile(expr=ind_hof)])
+    current_out_writer.writerow([round(list_results[0],3),round(list_results[1],3),list_results[2],close_seq,mini,ind_hof,toolbox.compile(expr=ind_hof)])
 
     return ind_hof
 
@@ -408,13 +356,26 @@ if __name__ == "__main__":
     # The initial parameters
     rand=69
     size=90
-    ngen = 50
+    ngen = 60
     cxpb = 0.8
     mutpb = 0.05
     pb_pace=0.1
-    param_list=["original","rand",'size',"cross","mutate"] #"optimal"
+    param_list=["rand",'size',"cross","mutate"] #"optimal"   "original",
     
     plotData(30)
+    
+    # Saves the parameters and function set in the file parameters.csv
+    current_out_writer = csv.writer(open(results_path+'parameters.csv', 'w', newline=''), delimiter=',')
+    current_out_writer.writerow(['rand','size','ngen','cxpb','mutpb','pb_pace',])
+    current_out_writer.writerow([rand,size,ngen,cxpb,mutpb,pb_pace,])
+    current_out_writer.writerow(['function set']+[prim.name for prim in list(pset.primitives.values())[0]])
+    current_out_writer.writerow([toolbox.select.__name__,toolbox.select.func.__name__])
+    current_out_writer.writerow([toolbox.mate.__name__,toolbox.mate.func.__name__])
+    current_out_writer.writerow([toolbox.mutate.__name__,toolbox.mutate.func.__name__])
+    current_out_writer.writerow([toolbox.expr_init.__name__,toolbox.expr_init.func.__name__,'min',toolbox.expr_init.keywords['min_'],'max',toolbox.expr_init.keywords['max_']])
+    
+    
+    
     
     # It will makes NB_SIMU runs for each parameter
     for param in param_list:
