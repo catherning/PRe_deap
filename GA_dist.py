@@ -136,7 +136,7 @@ print('The scenario '+str(scenarioNB)+' is the sequence:')
 for session in attackAnswer:
     print(session)
 
-IND_INIT_SIZE = min(map(len, attackAnswer))-1
+IND_INIT_SIZE = min(map(len, attackAnswer))
 MAX_ACTIONS = max(map(len, attackAnswer))+7
 
 # =============================================================================
@@ -244,17 +244,17 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     list_results.append(min_gen)
     
     #Calculates the shortest distance to the real attacks
-    mini=1
+    mini=100
     for ind in hof:
         for seq in attackAnswer:
-            dist=d.Cosine(seq,ind)
+            dist=distfunc(seq,ind)
             if mini>dist:
                 mini=dist
                 close_seq=seq
                 ind_hof=ind
 
 
-    print ("{0}   {1}   {2}   {3}   {4}   {5}".format(list_results[0],round(list_results[1],3),list_results[2],close_seq,round(mini,3),ind_hof))
+    print ("{0}   {1}   {2}   {3}   {4}   {5}".format(round(list_results[0],3),round(list_results[1],3),list_results[2],close_seq,round(mini,3),ind_hof))
     current_out_writer.writerow([list_results[0],list_results[1],list_results[2],close_seq,mini,ind_hof])
 
     return ind_hof
@@ -289,8 +289,8 @@ if __name__ == "__main__":
     lamb = 100
     cxpb = 0.7
     mutpb = 0.2
-    pb_pace=0.1
-    param_list=["rand",'mu','lamb',"cross","mutate"] #"optimal"   "original",
+    pb_pace=0.05
+    param_list=["optimal"] #   "original","rand",'mu','lamb',"cross","mutate"
 
     #param='rand'
     
@@ -314,8 +314,7 @@ if __name__ == "__main__":
         print("\n")
         list_hof=[]
         
-        csv_file=open(results_path+param+'.csv','w', newline='')
-        
+        csv_file=open(results_path+param+'.csv','w', newline='')    
         current_out_writer = csv.writer(csv_file, delimiter=',')
         current_out_writer.writerow([param,'Max_fit','Gen','Dataset','Dist','Hof'])
         
@@ -329,7 +328,7 @@ if __name__ == "__main__":
                 list_hof.append(dico_hof)
         
         elif param=="mu":
-            print ("Mu   Max_fit   Gen")
+            print ("Mu   Min_fit   Gen")
             mu=60    
             for i in range (NB_SIMU):  
                 rand=int(time.clock()*10)
@@ -338,7 +337,7 @@ if __name__ == "__main__":
                 dico_hof[mu+i]=hof
                 list_hof.append(dico_hof)
         elif param=="lamb":
-            print ("Lamb   Max_fit   Gen")
+            print ("Lamb   Min_fit   Gen")
             mu=60    
             for i in range (NB_SIMU):  
                 rand=int(time.clock()*10)
@@ -348,7 +347,7 @@ if __name__ == "__main__":
                 list_hof.append(dico_hof)
      
         elif param=="cross":
-            print ("Crosspb   Max_fit   Gen")
+            print ("Crosspb   Min_fit   Gen")
             NB_SIMU=int((1-mutpb)/pb_pace)
             cxpb=0
             for i in range (NB_SIMU):   
@@ -360,13 +359,27 @@ if __name__ == "__main__":
                   
         elif param=="mutate":
             NB_SIMU=int((1-cxpb)/pb_pace)
-            print ("MutPb   Max_fit   Gen")
+            print ("MutPb   Min_fit   Gen")
             mutpb=0
             for i in range (NB_SIMU):  
                 rand=int(time.clock()*10)
                 dico_hof={}
                 hof=main(rand,mu,lamb,cxpb,mutpb+i*pb_pace,ngen,param)
                 dico_hof[round(mutpb+i*pb_pace,3)]=hof
+                list_hof.append(dico_hof)
+                
+        elif param=='optimal':
+            print ("Rand   Min_fit   Gen")
+            mu=67
+            lamb=104
+            cxpb=0.75
+            mutpb=0.25
+            
+            for i in range(NB_SIMU):
+                rand=int(time.clock()*10)
+                dico_hof={}
+                hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+                dico_hof[rand]=hof
                 list_hof.append(dico_hof)
         
         csv_file.close()

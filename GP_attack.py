@@ -192,16 +192,16 @@ def if_then_else(left,right,out1,out2):
 
 # =============================================================================
  
-
+distfunc=d.damerauLevenshteinHomerDistance
 
 def distance(seq):    
     # Calculate the distance with 30 sequences from the dataset, we take the smallest one.
-    dist_list=list(map(lambda p: d.damerauLevenshteinHomerDistance(p, seq), sessions[:30]))
+    dist_list=list(map(lambda p: distfunc(p, seq), sessions[:30]))
     mini=min(dist_list)
     return mini
 
 def distanceToAttack(seq):
-    dist_list=list(map(lambda p: d.damerauLevenshteinHomerDistance(p, seq), GA_dist.attackAnswer))
+    dist_list=list(map(lambda p: distfunc(p, seq), GA_dist.attackAnswer))
     maxi=max(dist_list)
     return maxi
 
@@ -212,11 +212,11 @@ def fitness(individual):
     seq = toolbox.compile(expr=individual)
     # Not wanted individuals
     if len(seq)>MAX_ACTIONS or len(seq)<=MIN_ACTIONS:
-        return -1000,1000
+        return 1000,  
     
-    dist=distance(seq)
+    #dist=distance(seq)
     distAttack=distanceToAttack(seq)
-    return dist,distAttack
+    return distAttack,#distAttack
 
 # =============================================================================
 # Create the functions used for the GP
@@ -234,7 +234,7 @@ pset.addPrimitive(if_then_else, 4)
 for i in range(1,14):
     pset.addTerminal([i])
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0,-1.0))
+creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
@@ -375,7 +375,8 @@ if __name__ == "__main__":
         current_out_writer.writerow([toolbox.mate.__name__,toolbox.mate.func.__name__])
         current_out_writer.writerow([toolbox.mutate.__name__,toolbox.mutate.func.__name__])
         current_out_writer.writerow([toolbox.expr_init.__name__,toolbox.expr_init.func.__name__,'min',toolbox.expr_init.keywords['min_'],'max',toolbox.expr_init.keywords['max_']])
-    
+        current_out_writer.writerow(['dist for fitness',distfunc.__name__])
+        current_out_writer.writerow(['size of tuple fitness',len(fitness([1]))])
     
     
     

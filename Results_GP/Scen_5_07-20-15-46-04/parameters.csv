@@ -1,7 +1,0 @@
-rand,size,ngen,cxpb,mutpb,pb_pace
-69,90,60,0.8,0.05,0.1
-function set,add,sub,mul,div,addOneAll,subOneAll,concatenate,repeat,if_then_else
-select,selTournament
-mate,cxOnePoint
-mutate,mutUniform
-expr_init,genFull,min,3,max,6

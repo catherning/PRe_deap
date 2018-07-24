@@ -1,0 +1,6 @@
+rand,ngen,mu,lambda,cxpb,mutpb,pb_pace
+65,150,70,100,0.7,0.2,0.05
+select,selNSGA2
+mate,cxTwoPoint
+mutate,mutList
+dist for fitness,damerauLevenshteinHomerDistance

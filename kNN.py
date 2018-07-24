@@ -89,6 +89,8 @@ def daysVector(list_actions):
         #If it's the last action
         if act==list_actions[-1]:
             actionToFeature(act)
+            duration=act['date']-beginning
+            feature_vect[1]=duration.total_seconds()/60
             date.append(beginning.date())
             days.append(feature_vect)
         
@@ -106,12 +108,12 @@ def daysVector(list_actions):
             feature_vect=[0]*6
             feature_vect[0]=act['date'].hour
             actionToFeature(act)
+            
     
     # It normalizes the vector
     for i in range (len(days)):
         days[i]= [j/max(days[i]) for j in days[i]]
-
-
+        
     return date,days
 
 
@@ -121,6 +123,7 @@ for line in user_file:
     data=line.split(',')
     activity=action(data)
     list_actions.append(activity)
+user_file.close()
 
 # Sorts the sequences by date of action 
 list_actions.sort(key=lambda r: r["date"])   
@@ -141,6 +144,7 @@ features_max=[]
 features_max.append(max(X[:,0])*1.2)
 for i in range(2,6):
     features_max.append((max(X[:,i])+0.0001)*1.2) #*1.2 to allow a small range, +0.0001 in case the max is one, but an anomalous attack can change the behavior
+print(features_max)
 
 #To get the lower limit for the possible values when we mutate the individuals
 features_min=[]

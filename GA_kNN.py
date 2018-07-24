@@ -10,6 +10,8 @@ import kNN
 import numpy as np
 import pandas
 import matplotlib.pyplot as plt
+import os
+import csv
 
 IND_INIT_SIZE = 5
 MAX_ACTIONS = 50
@@ -55,7 +57,7 @@ def action():
 
 
 def session():
-    """It creates and returns the individuals for the GA as a feature vector.
+    """It creates and returns a random individual for the GA as a feature vector.
     A feature vector contains the:
     - hour of beginning of the day
     - duration of the day (until last action done in the day)
@@ -88,7 +90,6 @@ def session():
         elif act["type"]=="http":
             feature_vect[5]+=1
 
-    beginning=act['date']   #XXX wtf
     feature_vect[1]=duration.total_seconds()/60 # the duration is in minutes
           
     # Normalize the vector
@@ -198,6 +199,12 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     # Run of the GA
     p,logbook=algorithms.eaMuPlusLambda(pop, toolbox, MU, LAMBDA, CXPB, MUTPB, NGEN, stats,
                               halloffame=hof,verbose=0)
+    with open(results_path+param+'_logbook.csv', 'a',newline='') as f:
+        w = csv.DictWriter(f, logbook[0].keys())
+        w.writeheader()
+        for el in logbook:
+            w.writerow(el)
+        w.writerow({})
     
     # Takes the max fitness of the population from all of the runs
     max_fit=0
@@ -208,10 +215,13 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
             max_gen=elt['gen']
     list_results.append(max_fit)
     list_results.append(max_gen)
+    
+    #TODO
+#    for ind in hof:
+#        dist = numpy.linalg.norm(a-b)
 
     print ("{0}     {1}    {2}    {3}".format(round(list_results[1],3),round(list_results[2],3),round(list_results[0],3),hof[0]))
-#    for ind in hof:
-#        print(ind)
+    current_out_writer.writerow([list_results[1],list_results[2],list_results[0],hof[0]])
     
     return pop, stats, hof
 
@@ -223,6 +233,10 @@ def plot(list_hof,param):
                           columns=["name","begin hour","logon","emails",'device','web'])
     pandas.tools.plotting.parallel_coordinates(df,"name")
     plt.title(param)
+    #plt.set_position([0.1,0.1,0.5,0.8])
+    lgd=plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    name=results_path+param+'.png'
+    plt.savefig(name, bbox_extra_artists=(lgd,), bbox_inches='tight')
     plt.show()
 
     
@@ -239,12 +253,29 @@ if __name__ == "__main__":
     mutpb = 0.05
     pb_pace=0.05
     
+    results_path='Results_GA_kNN/Scen_'+str(kNN.usr)+'_'+datetime.now().strftime('%m-%d-%H-%M-%S')+'/'
+    os.makedirs(results_path)
+    
+    # Saves the parameters and function set in the file parameters.csv
+    with open(results_path+'parameters.csv', 'w', newline='') as csv_param:
+        current_out_writer=csv.writer(csv_param, delimiter=',')
+        current_out_writer.writerow(['rand','ngen','mu','lambda','cxpb','mutpb','pb_pace',])
+        current_out_writer.writerow([rand,ngen,mu,lamb,cxpb,mutpb,pb_pace,])
+        current_out_writer.writerow([toolbox.select.__name__,toolbox.select.func.__name__])
+        current_out_writer.writerow([toolbox.mate.__name__,toolbox.mate.func.__name__])
+        current_out_writer.writerow([toolbox.mutate.__name__,toolbox.mutate.func.__name__])
+        #current_out_writer.writerow(['dist for fitness',distfunc.__name__])
+    
     param_list=["original","rand","mu","lamb","cross","mutate"] #"optimal"
     
     # It will makes NB_SIMU runs for each parameter
     for param in param_list:
         print("\n")
         list_hof=[]
+        
+        csv_file=open(results_path+param+'.csv','w', newline='')
+        current_out_writer = csv.writer(csv_file, delimiter=',')
+        current_out_writer.writerow([param,'Max_fit','Gen','Hof'])
         
         if param=="original":
             pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
@@ -302,4 +333,5 @@ if __name__ == "__main__":
                 rand=int(time.clock()*10)
                 pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
         
+        csv_file.close()
         plot(list_hof,param)
