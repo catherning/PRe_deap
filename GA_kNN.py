@@ -221,7 +221,7 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
 #        dist = numpy.linalg.norm(a-b)
 
     print ("{0}     {1}    {2}    {3}".format(round(list_results[1],3),round(list_results[2],3),round(list_results[0],3),hof[0]))
-    current_out_writer.writerow([list_results[1],list_results[2],list_results[0],hof[0]])
+    current_out_writer.writerow([list_results[0],list_results[1],list_results[2],hof[0]])
     
     return pop, stats, hof
 
@@ -233,8 +233,8 @@ def plot(list_hof,param):
                           columns=["name","begin hour","logon","emails",'device','web'])
     pandas.tools.plotting.parallel_coordinates(df,"name")
     plt.title(param)
-    #plt.set_position([0.1,0.1,0.5,0.8])
     lgd=plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.ylabel('Euclidean distance')
     name=results_path+param+'.png'
     plt.savefig(name, bbox_extra_artists=(lgd,), bbox_inches='tight')
     plt.show()
@@ -266,7 +266,7 @@ if __name__ == "__main__":
         current_out_writer.writerow([toolbox.mutate.__name__,toolbox.mutate.func.__name__])
         #current_out_writer.writerow(['dist for fitness',distfunc.__name__])
     
-    param_list=["original","rand","mu","lamb","cross","mutate"] #"optimal"
+    param_list=["optimal"] #  "original","rand","mu","lamb","cross","mutate"
     
     # It will makes NB_SIMU runs for each parameter
     for param in param_list:
@@ -279,14 +279,14 @@ if __name__ == "__main__":
         
         if param=="original":
             pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
-            list_hof.append(['original']+[hof[0][0]]+list(hof[0][2:]))
+            list_hof.append(['original',hof[0][0]]+list(hof[0][2:]))
             
         if param=="rand":
             print ("Max_fit   Gen   Rand")
             for i in range (NB_SIMU):
                 rand=int(time.clock()*10)
                 pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
-                list_hof.append([rand]+[hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([rand,hof[0][0]]+list(hof[0][2:]))
                 
             
         elif param=="mu":
@@ -294,14 +294,14 @@ if __name__ == "__main__":
             mu=20
             for i in range (NB_SIMU):      
                 pop,stats,hof=main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)
-                list_hof.append([mu+i]+[hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([mu+i,hof[0][0]]+list(hof[0][2:]))
             
         elif param=="lamb":
             print ("Max_fit   Gen    Lambda")
             lamb=70
             for i in range (NB_SIMU):
                 pop,stats,hof=main(rand,mu,lamb+i,cxpb,mutpb,ngen,param)
-                list_hof.append([lamb+i]+[hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([lamb+i,hof[0][0]]+list(hof[0][2:]))
 
          
         elif param=="cross":
@@ -310,7 +310,7 @@ if __name__ == "__main__":
             cxpb=0
             for i in range (NB_SIMU):          
                 pop,stats,hof=main(rand,mu,lamb,cxpb+i*pb_pace,mutpb,ngen,param)
-                list_hof.append([round(cxpb+i*pb_pace,3)]+[hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([round(cxpb+i*pb_pace,3),hof[0][0]]+list(hof[0][2:]))
 
          
         elif param=="mutate":
@@ -319,19 +319,19 @@ if __name__ == "__main__":
             mutpb=0
             for i in range (NB_SIMU):  
                 pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb+i*pb_pace,ngen,param)
-                list_hof.append([round(mutpb+i*pb_pace,3)]+[hof[0][0]]+list(hof[0][2:]))
+                list_hof.append([round(mutpb+i*pb_pace,3),hof[0][0]]+list(hof[0][2:]))
 
-#TODO
         elif param=="optimal":
-            NB_SIMU=50
-            mu=27
-            lamb=112
-            cxpb=0.18
-            mutpb=0.26
+            NB_SIMU=10
+            mu=22
+            lamb=79
+            cxpb=0.2
+            mutpb=0.22
             print ("Rand   Max_fit   Gen")
             for i in range (NB_SIMU):
                 rand=int(time.clock()*10)
                 pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+                list_hof.append([rand,hof[0][0]]+list(hof[0][2:]))
         
         csv_file.close()
         plot(list_hof,param)

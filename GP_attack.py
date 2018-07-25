@@ -234,7 +234,22 @@ pset.addPrimitive(if_then_else, 4)
 for i in range(1,14):
     pset.addTerminal([i])
 
-creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
+#Weight for the fitness
+# -1 minimization
+# 0 mix
+# 1 maximization
+goal=-1
+if goal==-1:
+    w=(-1.0,)
+    legend='Min'
+elif goal==1:
+    w=(1.0,)
+    legend='Max'
+else:
+    w=(1.0,-1.0)
+    legend='Max'
+
+creator.create("FitnessMax", base.Fitness, weights=(w))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
@@ -291,16 +306,44 @@ def main(rand,size,cxpb,mutpb,ngen,param,current_out_writer):
     # Run of the GP
     p,logbook=algorithms.eaSimple(pop, toolbox, cxpb, mutpb, ngen, stats, halloffame=hof,verbose=0)
     
+    with open(results_path+param+'_logbook.csv', 'a',newline='') as f:
+        w = csv.DictWriter(f, logbook[0].keys())
+        w.writeheader()
+        for el in logbook:
+            w.writerow(el)
+        w.writerow({})
     
-    #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
-    max_fit=0
-    max_gen=0
-    for elt in logbook:
-        if elt['avg']>max_fit:
-            max_fit=elt['avg']
-            max_gen=elt['gen']
-    list_results.append(max_fit)
-    list_results.append(max_gen)
+    
+    if goal==1:
+        #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
+        max_fit=0
+        max_gen=0
+        for elt in logbook:
+            if elt['avg']>max_fit:
+                max_fit=elt['avg']
+                max_gen=elt['gen']
+        list_results.append(max_fit)
+        list_results.append(max_gen)
+    elif goal==-1:
+        #Shows the minimum fitness after all the generations and the first generation where this max_fit was achieved
+        min_fit=1000
+        min_gen=0
+        for elt in logbook:
+            if elt['avg']<min_fit:
+                min_fit=elt['avg']
+                min_gen=elt['gen']
+        list_results.append(min_fit)
+        list_results.append(min_gen)
+    else:
+        #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
+        max_fit=0
+        max_gen=0
+        for elt in logbook:
+            if elt['avg'][0]>max_fit:
+                max_fit=elt['avg'][0]
+                max_gen=elt['gen']
+        list_results.append(max_fit)
+        list_results.append(max_gen)
     
     #Calculates the shortest distance to the real attacks
     mini=10
@@ -311,6 +354,7 @@ def main(rand,size,cxpb,mutpb,ngen,param,current_out_writer):
                 mini=dist
                 close_seq=seq
                 ind_hof=ind
+                
     if mini<0.3:   
         print ("{0}   {1}   {2}   {3}   {4}   {5}".format(round(list_results[0],3),round(list_results[1],3),list_results[2],close_seq,mini,toolbox.compile(expr=ind_hof)))
     else:
@@ -330,6 +374,8 @@ def plot(list_hof,param):
     plt.figure()
     df.plot()
     plt.title(param)
+    plt.xlabel('time')
+    plt.ylabel('action number')
     name=results_path+param+'.png'
     plt.savefig(name)
     plt.show() 
@@ -395,7 +441,7 @@ if __name__ == "__main__":
             list_hof=[dico_hof]
             
         if param=="rand":
-            print ("Rand   Max_fit   Gen")
+            print ("Rand   {0}_fit   Gen".format(legend))
             for i in range (NB_SIMU):
                 dico_hof={}
                 rand=int(time.clock()*10)
@@ -404,7 +450,7 @@ if __name__ == "__main__":
                 list_hof.append(dico_hof)
             
         elif param=="size":
-            print ("Size   Max_fit   Gen")
+            print ("Size   {0}_fit   Gen".format(legend))
             size=80
             for i in range (NB_SIMU):  
                 rand=int(time.clock()*10)
@@ -414,7 +460,7 @@ if __name__ == "__main__":
                 list_hof.append(dico_hof)
      
         elif param=="cross":
-            print ("CrossProba   Max_fit   Gen")
+            print ("CrossProba   {0}_fit   Gen".format(legend))
             NB_SIMU=int((1-mutpb)/pb_pace)
             cxpb=0
             for i in range (NB_SIMU):   
@@ -426,10 +472,8 @@ if __name__ == "__main__":
                   
         elif param=="mutate":
             NB_SIMU=int((1-cxpb)/pb_pace)
-            print ("MutPb   Max_fit   Gen")
+            print ("MutPb   {0}_fit   Gen".format(legend))
             mutpb=0
-            current_out_writer = csv.writer(csv_file, delimiter=',')
-            current_out_writer.writerow([param,'Avg_max_fit','Gen','Dataset','CosDist','Hof'])
             for i in range (NB_SIMU):  
                 rand=int(time.clock()*10)
                 dico_hof={}
