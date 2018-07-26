@@ -22,8 +22,6 @@ import GA_dist
 NB_ACTIONS=13
 # To change accordingly
 path='D:/r6.2/users/'
-results_path='Results_GP/Scen_'+str(GA_dist.scenarioNB)+'_'+datetime.now().strftime('%m-%d-%H-%M-%S')+'/'
-os.makedirs(results_path)
 list_users=os.listdir(path)
 attackers=['ACM2278','CMP2946','PLJ1771','CDE1846','MBG3183']
 actions=["l","e","h","d","f"]
@@ -205,7 +203,7 @@ def distanceToAttack(seq):
     maxi=max(dist_list)
     return maxi
 
-def fitness(individual):
+def fitnessMin(individual):
     """
     Calculate the fitness of one individual by compiling it and calculating the smallest distance of the sequence to the dataset
     """
@@ -214,15 +212,39 @@ def fitness(individual):
     if len(seq)>MAX_ACTIONS or len(seq)<=MIN_ACTIONS:
         return 1000,  
     
-    #dist=distance(seq)
     distAttack=distanceToAttack(seq)
-    return distAttack,#distAttack
+    return distAttack,
+
+def fitnessMax(individual):
+    """
+    Calculate the fitness of one individual by compiling it and calculating the smallest distance of the sequence to the dataset
+    """
+    seq = toolbox.compile(expr=individual)
+    # Not wanted individuals
+    if len(seq)>MAX_ACTIONS or len(seq)<=MIN_ACTIONS:
+        return -1000,  
+    
+    dist=distance(seq)
+    return dist,
+
+def fitnessMix(individual):
+    """
+    Calculate the fitness of one individual by compiling it and calculating the smallest distance of the sequence to the dataset
+    """
+    seq = toolbox.compile(expr=individual)
+    # Not wanted individuals
+    if len(seq)>MAX_ACTIONS or len(seq)<=MIN_ACTIONS:
+        return -1000,1000  
+    
+    dist=distance(seq)
+    distAttack=distanceToAttack(seq)
+    return dist,distAttack
 
 # =============================================================================
 # Create the functions used for the GP
 pset = gp.PrimitiveSet("MAIN", 0)
 pset.addPrimitive(add, 2)
-pset.addPrimitive(sub, 2)
+pset.addPrimitive(sub, 2)                                                                          
 pset.addPrimitive(mul, 2)
 pset.addPrimitive(div, 2)
 pset.addPrimitive(addOneAll, 1)
@@ -233,26 +255,36 @@ pset.addPrimitive(if_then_else, 4)
 #pset.addEphemeralConstant("rand101", lambda: random.randint(0, 13))
 for i in range(1,14):
     pset.addTerminal([i])
+    
+    
+toolbox = base.Toolbox()
 
-#Weight for the fitness
+#Goal for the fitness
 # -1 minimization
 # 0 mix
 # 1 maximization
-goal=-1
+goal=0
 if goal==-1:
     w=(-1.0,)
     legend='Min'
+    toolbox.register("evaluate", fitnessMin)
+    results_path='Results_GP/Minimization/Scen_'+str(GA_dist.scenarioNB)+'_'+datetime.now().strftime('%m-%d-%H-%M-%S')+'/'
 elif goal==1:
     w=(1.0,)
     legend='Max'
+    toolbox.register("evaluate", fitnessMax)
+    results_path='Results_GP/Maximization/Scen_'+str(GA_dist.scenarioNB)+'_'+datetime.now().strftime('%m-%d-%H-%M-%S')+'/'
 else:
     w=(1.0,-1.0)
-    legend='Max'
+    legend='Mix'
+    toolbox.register("evaluate", fitnessMix)
+    results_path='Results_GP/MixMinMax/Scen_'+str(GA_dist.scenarioNB)+'_'+datetime.now().strftime('%m-%d-%H-%M-%S')+'/'
 
-creator.create("FitnessMax", base.Fitness, weights=(w))
+os.makedirs(results_path)
+
+creator.create("FitnessMax", base.Fitness, weights=w)
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
-toolbox = base.Toolbox()
 
 # Attribute generator
 toolbox.register("expr_init", gp.genFull, pset=pset, min_=3, max_=6)
@@ -262,7 +294,7 @@ toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("compile", gp.compile, pset=pset)
 
 
-toolbox.register("evaluate", fitness)
+
 #DoubleTournament to limit tree size, but different arguments
 toolbox.register("select", tools.selTournament, tournsize=7)
 toolbox.register("mate", gp.cxOnePoint)
@@ -275,7 +307,7 @@ toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter('height'), max
 
 # =============================================================================
 
-def main(rand,size,cxpb,mutpb,ngen,param,current_out_writer):
+def main(rand,size,cxpb,mutpb,ngen,param):
     """
     main executes one run of the GP and print the results.
     """
@@ -298,10 +330,10 @@ def main(rand,size,cxpb,mutpb,ngen,param,current_out_writer):
     pop = toolbox.population(n=size)
     hof = tools.HallOfFame(5)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("avg", numpy.mean)
+    stats.register("avg", numpy.mean, axis=0)
 #    stats.register("std", numpy.std)
-    stats.register("min", numpy.min)
-    stats.register("max", numpy.max)
+    stats.register("min", numpy.min, axis=0)
+    stats.register("max", numpy.max, axis=0)
 
     # Run of the GP
     p,logbook=algorithms.eaSimple(pop, toolbox, cxpb, mutpb, ngen, stats, halloffame=hof,verbose=0)
@@ -407,7 +439,7 @@ if __name__ == "__main__":
     cxpb = 0.8
     mutpb = 0.05
     pb_pace=0.1
-    param_list=["rand",'size',"cross","mutate"] #"optimal"   "original",
+    param_list=["optimal"] #   "original","rand",'size',"cross","mutate"
     
     plotData(30)
     
@@ -422,7 +454,8 @@ if __name__ == "__main__":
         current_out_writer.writerow([toolbox.mutate.__name__,toolbox.mutate.func.__name__])
         current_out_writer.writerow([toolbox.expr_init.__name__,toolbox.expr_init.func.__name__,'min',toolbox.expr_init.keywords['min_'],'max',toolbox.expr_init.keywords['max_']])
         current_out_writer.writerow(['dist for fitness',distfunc.__name__])
-        current_out_writer.writerow(['size of tuple fitness',len(fitness([1]))])
+        #current_out_writer.writerow(['size of tuple fitness',len(fitness([1]))])
+        current_out_writer.writerow(['goal',goal])
     
     
     
@@ -445,7 +478,7 @@ if __name__ == "__main__":
             for i in range (NB_SIMU):
                 dico_hof={}
                 rand=int(time.clock()*10)
-                hof=main(rand,size,cxpb,mutpb,ngen,param,current_out_writer)
+                hof=main(rand,size,cxpb,mutpb,ngen,param)
                 dico_hof[rand]=toolbox.compile(expr=hof) 
                 list_hof.append(dico_hof)
             
@@ -455,7 +488,7 @@ if __name__ == "__main__":
             for i in range (NB_SIMU):  
                 rand=int(time.clock()*10)
                 dico_hof={}
-                hof=main(rand,size+i,cxpb,mutpb,ngen,param,current_out_writer)
+                hof=main(rand,size+i,cxpb,mutpb,ngen,param)
                 dico_hof[size+i]=toolbox.compile(expr=hof) 
                 list_hof.append(dico_hof)
      
@@ -466,7 +499,7 @@ if __name__ == "__main__":
             for i in range (NB_SIMU):   
                 rand=int(time.clock()*10)
                 dico_hof={}
-                hof=main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param,current_out_writer)
+                hof=main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param)
                 dico_hof[round(cxpb+i*pb_pace,3)]=toolbox.compile(expr=hof)
                 list_hof.append(dico_hof)
                   
@@ -477,20 +510,22 @@ if __name__ == "__main__":
             for i in range (NB_SIMU):  
                 rand=int(time.clock()*10)
                 dico_hof={}
-                hof=main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param,current_out_writer)
+                hof=main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param)
                 dico_hof[round(mutpb+i*pb_pace,3)]=toolbox.compile(expr=hof)
                 list_hof.append(dico_hof)
 
-#TODO
-#        elif param=="optimal":
-#            NB_SIMU=50
-#            mu=27
-#            lamb=112
-#            cxpb=0.18
-#            mutpb=0.26
-#            print ("Rand   Max_fit   Gen")
-#            for i in range (NB_SIMU):
-#                rand=int(time.clock()*10)
-#                pop,stats,hof=main(rand,mu,lamb,cxpb,mutpb,ngen,param)
+        elif param=="optimal":
+            NB_SIMU=10
+            size=84
+            cxpb=0.5
+            mutpb=0.5
+            print ("Rand   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                rand=int(time.clock()*10)
+                dico_hof={}
+                hof=main(rand,size,cxpb,mutpb,ngen,param)
+                dico_hof[rand]=toolbox.compile(expr=hof)
+                list_hof.append(dico_hof)
+                
         csv_file.close()
         plot(list_hof,param)
