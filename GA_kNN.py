@@ -231,7 +231,7 @@ def plot(list_hof,param):
     plt.figure()    
     df = pandas.DataFrame(list_hof,
                           columns=["name","begin hour","logon","emails",'device','web'])
-    pandas.tools.plotting.parallel_coordinates(df,"name")
+    pandas.plotting.parallel_coordinates(df,"name")
     plt.title(param)
     lgd=plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     plt.ylabel('Euclidean distance')

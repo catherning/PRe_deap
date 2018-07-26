@@ -209,9 +209,9 @@ def fitnessMin(individual):
     """
     seq = toolbox.compile(expr=individual)
     # Not wanted individuals
-    if len(seq)>MAX_ACTIONS or len(seq)<=MIN_ACTIONS:
-        return 1000,  
+    if len(seq)>MAX_ACTIONS or len(seq)<=MIN_ACTIONS:        return 1000,  
     
+
     distAttack=distanceToAttack(seq)
     return distAttack,
 
@@ -225,6 +225,7 @@ def fitnessMax(individual):
         return -1000,  
     
     dist=distance(seq)
+
     return dist,
 
 def fitnessMix(individual):
@@ -263,7 +264,7 @@ toolbox = base.Toolbox()
 # -1 minimization
 # 0 mix
 # 1 maximization
-goal=0
+goal=1
 if goal==-1:
     w=(-1.0,)
     legend='Min'
@@ -330,10 +331,17 @@ def main(rand,size,cxpb,mutpb,ngen,param):
     pop = toolbox.population(n=size)
     hof = tools.HallOfFame(5)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("avg", numpy.mean, axis=0)
-#    stats.register("std", numpy.std)
-    stats.register("min", numpy.min, axis=0)
-    stats.register("max", numpy.max, axis=0)
+    if goal==0:
+        
+        stats.register("avg", numpy.mean, axis=0)
+    #    stats.register("std", numpy.std)
+        stats.register("min", numpy.min, axis=0)
+        stats.register("max", numpy.max, axis=0)
+    else:
+        stats.register("avg", numpy.mean)
+    #    stats.register("std", numpy.std)
+        stats.register("min", numpy.min)
+        stats.register("max", numpy.max)
 
     # Run of the GP
     p,logbook=algorithms.eaSimple(pop, toolbox, cxpb, mutpb, ngen, stats, halloffame=hof,verbose=0)
@@ -406,10 +414,11 @@ def plot(list_hof,param):
     plt.figure()
     df.plot()
     plt.title(param)
+    lgd=plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     plt.xlabel('time')
     plt.ylabel('action number')
     name=results_path+param+'.png'
-    plt.savefig(name)
+    plt.savefig(name, bbox_extra_artists=(lgd,), bbox_inches='tight')
     plt.show() 
 
 def plotData(number):
