@@ -16,6 +16,8 @@ import distance as d
 import operator
 import matplotlib.pyplot as plt
 import pandas as pd
+#import networkx as nx
+#from networkx.drawing.nx_agraph import graphviz_layout
 
 import GA_dist
 
@@ -260,11 +262,11 @@ for i in range(1,14):
     
 toolbox = base.Toolbox()
 
-#Goal for the fitness
+#Goal for the fitness. Saved in a different folder
 # -1 minimization
 # 0 mix
 # 1 maximization
-goal=1
+goal=0
 if goal==-1:
     w=(-1.0,)
     legend='Min'
@@ -433,7 +435,18 @@ def plotData(number):
     df.plot(legend=False)
     plt.title('Dataset')
     plt.show()
-    
+
+#def plotTree(nodes,edges,labels): 
+#
+#    g = nx.Graph()
+#    g.add_nodes_from(nodes)
+#    g.add_edges_from(edges)
+#    pos = nx.nx_pydot.graphviz_layout(g, prog="dot")
+#    
+#    nx.draw_networkx_nodes(g, pos)
+#    nx.draw_networkx_edges(g, pos)
+#    nx.draw_networkx_labels(g, pos, labels)
+#    plt.show()
     
 # =============================================================================
 
@@ -448,7 +461,7 @@ if __name__ == "__main__":
     cxpb = 0.8
     mutpb = 0.05
     pb_pace=0.1
-    param_list=["optimal"] #   "original","rand",'size',"cross","mutate"
+    param_list=["rand"] #   "original","rand",'size',"cross","mutate"
     
     plotData(30)
     
@@ -490,6 +503,9 @@ if __name__ == "__main__":
                 hof=main(rand,size,cxpb,mutpb,ngen,param)
                 dico_hof[rand]=toolbox.compile(expr=hof) 
                 list_hof.append(dico_hof)
+                
+#                nodes, edges, labels = gp.graph(hof)
+#                plotTree(nodes,edges,labels)
             
         elif param=="size":
             print ("Size   {0}_fit   Gen".format(legend))
@@ -524,7 +540,7 @@ if __name__ == "__main__":
                 list_hof.append(dico_hof)
 
         elif param=="optimal":
-            NB_SIMU=10
+            NB_SIMU=50
             size=84
             cxpb=0.5
             mutpb=0.5

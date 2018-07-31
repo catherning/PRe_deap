@@ -1,0 +1,2 @@
+rand,Avg_max_fit,Gen,Dataset,CosDist,Hof
+0,5.0,55,"[6, 10, 6, 10, 6, 10, 6, 10, 4, 2]",0.02817468419245006,"addOneAll(if_then_else(repeat(mul(repeat([5]), mul([1], [11]))), mul(if_then_else(add([13], [6]), sub([4], [11]), repeat([10]), div([13], [8])), if_then_else(mul([12], [6]), mul([8], [13]), if_then_else([1], [9], [2], [9]), subOneAll([1]))), sub(sub(concatenate([10], [6]), repeat([6])), concatenate([10], subOneAll([1]))), mul(mul(add([6], [10]), div([1], [7])), add(addOneAll([13]), concatenate([1], [10])))))","[6, 10, 6, 10, 4]"
