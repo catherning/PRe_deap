@@ -104,11 +104,11 @@ ant = AntSimulator(600)
 
 pset = gp.PrimitiveSet("MAIN", 0)
 pset.addPrimitive(ant.if_food_ahead, 2)
-#pset.addPrimitive(prog2, 2)
+pset.addPrimitive(prog2, 2)
 pset.addPrimitive(prog3, 3)
 pset.addTerminal(ant.move_forward)
 pset.addTerminal(ant.turn_left)
-pset.addTerminal(ant.turn_right)
+#pset.addTerminal(ant.turn_right)
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
@@ -140,15 +140,30 @@ toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter('height'), max_value=50))
 toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter('height'), max_value=50))
 
-def mainRand():
-    rand=int(time.clock())
-    random.seed(rand)
-    list_results=[rand]
+def main(rand,size,cxpb,mutpb,ngen,param):
+    random.seed(rand)        
+    NGEN = ngen
+    SIZE = size
+    CXPB = cxpb
+    MUTPB = mutpb
+    
+    if param=="rand" or param=="optimal":
+        list_results=[rand]
+    elif param=="size":
+        list_results=[size]
+    elif param=="cross":
+        list_results=[cxpb]
+    elif param=="mutate":
+        list_results=[mutpb]
+    elif param=="ngen":
+        list_results=[ngen]
+    elif param=="original":
+        list_results=[param]
     
     with  open("C:/Users/cx10/deap-master/examples/gp/ant/santafe_trail.txt") as trail_file:
       ant.parse_matrix(trail_file)
     
-    pop = toolbox.population(n=100)
+    pop = toolbox.population(n=SIZE)
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
@@ -157,7 +172,7 @@ def mainRand():
     stats.register("max", numpy.max)
 
     
-    p,logbook=algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 40, stats, halloffame=hof,verbose=0)
+    p,logbook=algorithms.eaSimple(pop, toolbox, CXPB, MUTPB, NGEN, stats, halloffame=hof,verbose=0)
     
     
     #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
@@ -172,166 +187,7 @@ def mainRand():
         i+=1
     list_results.append(logbook[i]['gen'])
    
-    print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
-    
-    
-    #Shows the individuals in the Hall of Fame
-    #for ind in hof:
-     #   print (ind)
-    
-    return pop, hof, stats
-
-def mainPop(size):
-    random.seed(69)
-    list_results=[size]
-    
-    with  open("C:/Users/cx10/deap-master/examples/gp/ant/santafe_trail.txt") as trail_file:
-      ant.parse_matrix(trail_file)
-    
-    pop = toolbox.population(n=size)
-    hof = tools.HallOfFame(1)
-    stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("avg", numpy.mean)
-    stats.register("std", numpy.std)
-    stats.register("min", numpy.min)
-    stats.register("max", numpy.max)
-
-    
-    p,logbook=algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 40, stats, halloffame=hof,verbose=0)
-    
-    
-    #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
-    list_max=[]
-    for elt in logbook:
-        list_max.append(elt['max'])
-    max_fit=max(list_max)
-    list_results.append(max_fit)
-
-    i=0
-    while(logbook[i]['max']!=max_fit):
-        i+=1
-    list_results.append(logbook[i]['gen'])
-   
-    print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
-    
-    
-    #Shows the individuals in the Hall of Fame
-    #for ind in hof:
-     #   print (ind)
-    
-    return pop, hof, stats
-
-def mainProba(proba,operation):
-    random.seed(68)
-    list_results=[proba]
-    
-    with  open("C:/Users/cx10/deap-master/examples/gp/ant/santafe_trail.txt") as trail_file:
-      ant.parse_matrix(trail_file)
-    
-    pop = toolbox.population(n=100)
-    hof = tools.HallOfFame(1)
-    stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("avg", numpy.mean)
-    stats.register("std", numpy.std)
-    stats.register("min", numpy.min)
-    stats.register("max", numpy.max)
-
-    if(operation=="cross"):
-        p,logbook=algorithms.eaSimple(pop, toolbox, proba, 0.2, 40, stats, halloffame=hof,verbose=0)
-    else:
-        p,logbook=algorithms.eaSimple(pop, toolbox, 0.5, proba, 40, stats, halloffame=hof,verbose=0)
-    
-    #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
-    list_max=[]
-    for elt in logbook:
-        list_max.append(elt['max'])
-    max_fit=max(list_max)
-    list_results.append(max_fit)
-
-    i=0
-    while(logbook[i]['max']!=max_fit):
-        i+=1
-    list_results.append(logbook[i]['gen'])
-   
-    print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
-    
-    
-    #Shows the individuals in the Hall of Fame
-    #for ind in hof:
-     #   print (ind)
-    
-    return pop, hof, stats
-
-def mainGen(gen):
-    rand=int(time.clock())
-    random.seed(rand)
-    list_results=[rand]
-    
-    with  open("C:/Users/cx10/deap-master/examples/gp/ant/santafe_trail.txt") as trail_file:
-      ant.parse_matrix(trail_file)
-    
-    pop = toolbox.population(n=100)
-    hof = tools.HallOfFame(1)
-    stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("avg", numpy.mean)
-    stats.register("std", numpy.std)
-    stats.register("min", numpy.min)
-    stats.register("max", numpy.max)
-
-    p,logbook=algorithms.eaSimple(pop, toolbox, 0.5, 0.2, gen, stats, halloffame=hof)
-    
-    #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
-    list_max=[]
-    for elt in logbook:
-        list_max.append(elt['max'])
-    max_fit=max(list_max)       #list_max[1]
-    list_results.append(max_fit)
-
-    i=0
-    while(logbook[i]['max']!=max_fit):
-        i+=1
-    list_results.append(logbook[i]['gen'])
-   
-    print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
-    
-    
-    #Shows the individuals in the Hall of Fame
-    #for ind in hof:
-     #   print (ind)
-    
-    return pop, hof, stats
-
-def mainOpt():
-    rand=int(time.clock())
-    random.seed(rand)
-    list_results=[rand]
-    
-    with  open("C:/Users/cx10/deap-master/examples/gp/ant/santafe_trail.txt") as trail_file:
-      ant.parse_matrix(trail_file)
-    
-    pop = toolbox.population(n=355)
-    hof = tools.HallOfFame(1)
-    stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("avg", numpy.mean)
-    stats.register("std", numpy.std)
-    stats.register("min", numpy.min)
-    stats.register("max", numpy.max)
-
-    p,logbook=algorithms.eaSimple(pop, toolbox, 0.34, 0.56, 70, stats, halloffame=hof,verbose=0)
-    
-    #Shows the maximum fitness  after all the generations and the first generation where this max_fit was achieved
-    list_max=[]
-    for elt in logbook:
-        list_max.append(elt['max'])
-    max_fit=max(list_max)       #list_max[1]
-    list_results.append(max_fit)
-
-    i=0
-    while(logbook[i]['max']!=max_fit):
-        i+=1
-    list_results.append(logbook[i]['gen'])
-   
-    print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
+    print ("{0}   {1}   {2}".format(list_results[0],list_results[1],list_results[2]))
     
     
     #Shows the individuals in the Hall of Fame
@@ -342,31 +198,50 @@ def mainOpt():
 
 
 if __name__ == "__main__":
-    NB_SIMU=10
-    param="rand"
+    NB_SIMU=50
+    rand=69
+    ngen = 40
+    size=100
+    cxpb = 0.5
+    mutpb = 0.2
+    pb_pace=0.02
+
     
-    if param=="rand":
-        print ("Rand   Max_fit  Gen")
-        for i in range (NB_SIMU):
-            mainRand()
-    elif param=="pop_size":
-        print ("Pop_size   Max_fit  Gen")
-        for i in range (NB_SIMU):
-            mainPop(500+i*5)
-    elif param=="cross":
-        print ("Cross_proba   Max_fit  Gen")
-        for i in range (NB_SIMU):
-            mainProba(0.2+i*0.02,param)
-    elif param=="mutate":
-        print ("Mutate_proba   Max_fit  Gen")
-        for i in range (NB_SIMU):
-            mainProba(0.08+i*0.02,param)
-    #Not really interesting bc it is always the same at the beginning, just adding a gen each time
-    elif param=="gen":
-        print ("Total_gen   Max_fit  Gen")
-        for i in range (NB_SIMU):
-            mainGen(70)
-    else:
-        print ("Rand   Max_fit  Gen")
-        for i in range (NB_SIMU):
-            mainOpt()
+    param_list=["optimal"] #"original","rand","size","cross","mutate","optimal"
+    
+    for param in param_list:
+        print("\n")
+    
+        if param=="rand":
+            print ("Rand   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                rand=int(time.clock()*10)
+                main(rand,size,cxpb,mutpb,ngen,param)
+        elif param=="size":
+            print ("Size   Max_fit   Gen")
+            size=200
+            for i in range (NB_SIMU):            
+                main(rand,size+5*i,cxpb,mutpb,ngen,param)
+        elif param=="cross":
+            mutpb=0
+            NB_SIMU=int((1-mutpb)/pb_pace)
+            print ("CrossProba   Max_fit   Gen")
+            cxpb=0
+            for i in range (NB_SIMU):
+                main(rand,size,cxpb+i*pb_pace,mutpb,ngen,param)
+        elif param=="mutate":
+            cxpb=0.02
+            NB_SIMU=int((1-cxpb)/pb_pace)
+            print ("MutPb   Max_fit   Gen")
+            mutpb=0
+            for i in range (NB_SIMU): 
+                main(rand,size,cxpb,mutpb+i*pb_pace,ngen,param)
+        elif param=="optimal":
+            size=355
+            cxpb=0.34
+            mutpb=0.56
+            ngem=70
+            print ("Rand   Max_fit   Gen")
+            for i in range (NB_SIMU):
+                rand=int(time.clock()*10)
+                main(rand,size,cxpb,mutpb,ngen,param)

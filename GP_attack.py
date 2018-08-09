@@ -266,7 +266,7 @@ toolbox = base.Toolbox()
 # -1 minimization
 # 0 mix
 # 1 maximization
-goal=0
+goal=-1
 if goal==-1:
     w=(-1.0,)
     legend='Min'

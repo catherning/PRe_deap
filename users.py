@@ -1,11 +1,3 @@
- # -*- coding: utf-8 -*-
-"""
-Created on Wed Jun  6 10:20:38 2018
-
-@author: cx10
-"""
-
-
 import datetime
 import csv
 import os
@@ -21,40 +13,6 @@ with open(path+'psychometric.csv') as csvfile:
     psychometric_file = csv.DictReader(csvfile)
     for row in psychometric_file:
        list_user_id.append(row['user_id'])
-       
-#To create the files of the users/ start from scratch       
-#       usr_file=open(path+"users/"+row['user_id']+'.csv','w+')
-#       usr_file.close()
-
-
-
-#Older version which would parallelize by user, and open the big files of actions each time...
-#def actions(user):
-#    usr_file=open(path+"users/"+user+'.csv','w+')
-#    
-#    for act in list_actions:
-#    #act='device'    
-#        file =open(path+act+'.csv')
-#        for line in file:
-#            data=line.split(',')
-#            usr=data[2]
-#            if user==usr:
-#                    usr_file.write(act+',')
-#                    usr_file.write(data[1]+','+data[3]+',')
-#                    if act=='device':
-#                        usr_file.write(data[4]+',')
-#                        usr_file.writelines(data[5])
-#                    elif act=='logon':  
-#                        usr_file.writelines(data[4])
-#                    else:
-#                        for i in range(4,len(data)-2):
-#                            usr_file.write(data[i]+',')
-#                        usr_file.writelines(data[len(data)-2])
-#    
-#        file.close()
-#    
-#    usr_file.close()
-#    return user
 
 #Splits the actions in file by user
 def actions(file):

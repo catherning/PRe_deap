@@ -73,15 +73,15 @@ def daysVector(list_actions):
     beginning=list_actions[0]['date']
     feature_vect=[0]*6
     feature_vect[0]=beginning.hour
-    date=[]
+    dates=[]
     
     def actionToFeature(act):
         if act['type']=='l':
             feature_vect[2]+=1
         elif act['type']=='e' and act['activity']=='Send':
             feature_vect[3]+=1
-        elif act['type']=='f' and (act["to_removable_media"]=='True' or act["from_removable_media"]=='True'):
-            feature_vect[4]=+1
+        elif act['type']=='f' and (act["to_removable_media"][0]=='T' or act["from_removable_media"][0]=='T'): #T for True, but there's a hidden \n sometimes
+            feature_vect[4]+=1
         elif act["type"]=="h":
             feature_vect[5]+=1
     
@@ -91,7 +91,7 @@ def daysVector(list_actions):
             actionToFeature(act)
             duration=act['date']-beginning
             feature_vect[1]=duration.total_seconds()/60
-            date.append(beginning.date())
+            dates.append(beginning.date())
             days.append(feature_vect)
         
         #The action is done the same day
@@ -101,7 +101,7 @@ def daysVector(list_actions):
         
         #The date of the action is different, so it is a new one
         else:
-            date.append(beginning.date())
+            dates.append(beginning.date())
             beginning=act['date']
             feature_vect[1]=duration.total_seconds()/60
             days.append(feature_vect)
@@ -114,7 +114,7 @@ def daysVector(list_actions):
     for i in range (len(days)):
         days[i]= [j/max(days[i]) for j in days[i]]
         
-    return date,days
+    return dates,days
 
 
 #Takes the activity from the file of one user, combine it in one feature vector
@@ -138,6 +138,7 @@ for i in range(len(sessions)):
 
 #TODO Takes 90 first sessions (the date begins the 4th January, the earliest attack is in July)
 X=np.asarray(sessions)
+print(X)
 
 #To get the upper limit for the possible values when we mutate the individuals
 features_max=[]

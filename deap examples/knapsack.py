@@ -129,6 +129,7 @@ def main(rand,mu,lamb,cxpb,mutpb,ngen,param):
     while(logbook[i]['max'][1]!=max_fit[1]):
         i+=1
     list_results.append(logbook[i]['gen'])
+    
     print ("{0}     {1}    {2}".format(list_results[0],list_results[1],list_results[2]))
     
     
@@ -151,7 +152,7 @@ if __name__ == "__main__":
     mutpb = 0.2
     pb_pace=0.02
     
-    param_list=["original","rand","mu","lamb","cross","mutate","optimal"]
+    param_list=["cross"] #"original","rand","mu","lamb","cross","mutate","optimal"
     
     for param in param_list:
         print("\n")
@@ -175,17 +176,19 @@ if __name__ == "__main__":
             for i in range (NB_SIMU):
                 main(rand,mu,lamb+i,cxpb,mutpb,ngen,param)
         elif param=="cross":
-            print ("CrossProba   Max_fit   Gen")
+            mutpb=0
             NB_SIMU=int((1-mutpb)/pb_pace)
+            print ("CrossProba   Max_fit   Gen")
             cxpb=0
             for i in range (NB_SIMU):
                 main(rand,mu,lamb,cxpb+i*pb_pace,mutpb,ngen,param)
         elif param=="mutate":
+            cxpb=0.02
             NB_SIMU=int((1-cxpb)/pb_pace)
             print ("MutPb   Max_fit   Gen")
             mutpb=0
             for i in range (NB_SIMU): 
-                main(rand,mu+i,lamb,cxpb,mutpb+i*pb_pace,ngen,param)
+                main(rand,mu,lamb,cxpb,mutpb+i*pb_pace,ngen,param)
         elif param=="optimal":
             NB_SIMU=50
             mu=27
@@ -195,4 +198,4 @@ if __name__ == "__main__":
             print ("Rand   Max_fit   Gen")
             for i in range (NB_SIMU):
                 rand=int(time.clock()*10)
-                main(rand,mu+i,lamb,cxpb,mutpb,ngen,param)
+                main(rand,mu,lamb,cxpb,mutpb,ngen,param)
