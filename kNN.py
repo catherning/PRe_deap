@@ -133,12 +133,11 @@ session_date,sessions=daysVector(list_actions)
 dico_session={}
 for i in range(len(sessions)):
     dico_session[session_date[i]]=sessions[i]
-
-
+    print("{0}   {1}".format(session_date[i],sessions[i]))
+    
 
 #TODO Takes 90 first sessions (the date begins the 4th January, the earliest attack is in July)
 X=np.asarray(sessions)
-print(X)
 
 #To get the upper limit for the possible values when we mutate the individuals
 features_max=[]
@@ -166,48 +165,48 @@ def distance(individual):
     """
     #Unsupervised kNN
     distances, indices = nbrs.kneighbors([individual])
-    return distances[0,2]  
+    return distances[0,1]  
 
 # Used to print/keep the anomalous sequences of one attacker from the dataset. The dates come from the answer files
 # They can be used for comparison with the results
-if 'usr' in vars():
-    attacks=[]  #TODO compare the results with the attacks in this list, using distance or kNN
-    year=2010
-    if usr==attackers[0]:
-        duration=9
-        begin_date=16
-        month=8
-    elif usr==attackers[1]:
-        duration=25
-        begin_date=3
-        month=2
-        year=2011
-    elif usr==attackers[2]:
-        duration=3
-        begin_date=10
-        month=8
-    elif usr==attackers[3]:
-        duration=7
-        begin_date=19
-        month=4
-        year=2011
-    elif usr==attackers[4]:
-        duration=5
-        begin_date=8
-        month=10
-        
-    print(usr+' attacks')
-    for i in range(duration):
-        key=date(year,month,begin_date+i)
-        if key in dico_session:
-            print(key)
-            print(dico_session[key])
-            attacks.append(dico_session[key])
-    if usr==attackers[1]:
-        for i in range(4):
-            key=date(year,month+1,1+i)
-            if key in dico_session:
-                print(key)
-                print(dico_session[key])
-                attacks.append(dico_session[key])
+#if 'usr' in vars():
+#    attacks=[]  #TODO compare the results with the attacks in this list, using distance or kNN
+#    year=2010
+#    if usr==attackers[0]:
+#        duration=9
+#        begin_date=16
+#        month=8
+#    elif usr==attackers[1]:
+#        duration=25
+#        begin_date=3
+#        month=2
+#        year=2011
+#    elif usr==attackers[2]:
+#        duration=3
+#        begin_date=10
+#        month=8
+#    elif usr==attackers[3]:
+#        duration=7
+#        begin_date=19
+#        month=4
+#        year=2011
+#    elif usr==attackers[4]:
+#        duration=5
+#        begin_date=8
+#        month=10
+#        
+#    print(usr+' attacks')
+#    for i in range(duration):
+#        key=date(year,month,begin_date+i)
+#        if key in dico_session:
+#            print(key)
+#            print(dico_session[key])
+#            attacks.append(dico_session[key])
+#    if usr==attackers[1]:
+#        for i in range(4):
+#            key=date(year,month+1,1+i)
+#            if key in dico_session:
+#                print(key)
+#                print(dico_session[key])
+#                attacks.append(dico_session[key])
                 
